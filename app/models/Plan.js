@@ -40,7 +40,7 @@ const Plan = new Schema({
     default : 0
   },
 
-  requestPerDay : {
+  requestPerDayLimit : {
     type    : Number,
     default : 0
   },

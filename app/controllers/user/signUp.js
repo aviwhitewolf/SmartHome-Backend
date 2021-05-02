@@ -149,9 +149,7 @@ let signUpFunction = (req, res) => {
                                 homeLimit: plan.homeLimit,
                                 deviceLimit: plan.deviceLimit,
                                 roomLimit: plan.roomLimit,
-                                roomName: "",
-                                requestPerDay: plan.requestPerDay,
-                                connectedDeviceLimit: plan.deviceLimit,
+                                requestPerDayLimit: plan.requestPerDayLimit,
                                 lastModified: time.now(),
                                 createdOn: time.now()
 

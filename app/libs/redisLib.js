@@ -2,10 +2,12 @@
 const check = require("./checkLib.js");
 const redis = require('redis');
 let client = redis.createClient();
+const logger = require('../libs/loggerLib');
 
 client.on('connect', () => {
 
-    console.log("Redis connection successfully opened");
+    // console.info("Redis connection successfully opened");
+    logger.info("Redis connection successfully opened", "redisLib.js : client.on()", 1)
 
 });
 
@@ -15,19 +17,18 @@ let getAllDataFromHash = (hashName, callback) => {
 
         if (err) {
 
-            console.log(err);
+            
+            logger.error("Error while fetching data from Hash : "+ hashName, "redisLib.js : getAllDataFromHash()", 10, err)
             callback(err, null)
 
         } else if (check.isEmpty(result)) {
 
-            console.log("list is empty");
-            console.log(result)
+            logger.error("Redis List is Empty for : " + hashName, "redisLib.js : getAllDataFromHash()", 10, err)
 
             callback(null, {})
 
         } else {
 
-            console.log(result);
             callback(null, result)
 
         }
@@ -42,21 +43,18 @@ let getDataFromHash = (hashName, key, callback) => {
 
         if (err) {
 
-            console.log(err);
+            logger.error("Error while fetching data from Hash : "+ hashName + "and key: " + key,
+             "redisLib.js : getDataFromHash()", 10, err)
             callback(err, null)
 
         } else if (check.isEmpty(result)) {
 
-            console.log("list is empty");
-            console.log(result)
-
+            logger.error("List is Empty: "+ hashName + "and key: " + key,
+            "redisLib.js : getDataFromHash()", 10, err)
             callback(null, {})
 
         } else {
-
-            console.log(result);
             callback(null, result)
-
         }
     });
 
@@ -72,15 +70,12 @@ let insertIntoHash = (hashName, key, value, callback) => {
 
         if (err) {
 
-            console.log(err);
+            logger.error("Error while inserting data into Hash : "+ hashName + "and key: " + key, value,
+            "redisLib.js : insertIntoHash()", 10, err)
             callback(err, null)
 
         } else {
-
-            console.log("entery has been set in the hash map");
-            console.log(result)
             callback(null, result)
-
         }
     });
 
@@ -93,18 +88,19 @@ let deleteFromHash = (hashName, key, callback) => {
         
         if (err) {
             
-            console.log(err);
+            logger.error("Error while deleting data from Hash : "+ hashName + "and key: " + key, value,
+            "redisLib.js : deleteFromHash()", 10, err)
             callback(err, null)
 
         } else if(result == 0){
 
-            console.log("No entry found in hashmap");
-            console.log(result)
+            logger.error("Error while deleting data from Hash : "+ hashName + "and key: " + key, value,
+            "redisLib.js : deleteFromHash()", 10, err)
             callback(null, result)
 
         } else if(result > 0){
 
-            console.log(result + " Entries deleted with keys :- " + key.toString())
+            logger.info("Entries deleted with keys :- " + key.toString(), "redisLib.js : deleteFromHash()", 1)
             callback(null, result)
         }
     });

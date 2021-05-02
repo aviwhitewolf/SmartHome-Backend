@@ -12,7 +12,7 @@ const globalErrorMiddleware = require('./app/middlewares/appErrorHandler');
 const mongoose              = require('mongoose');
 const morgan                = require('morgan');
 
-app.use(morgan('dev'));
+app.use(morgan(appConfig.environment));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -63,7 +63,7 @@ app.use(globalErrorMiddleware.globalNotFoundHandler);
 
 const server = http.createServer(app);
 // start listening to http server
-console.log(appConfig);
+
 server.listen(appConfig.port);
 server.on('error', onError);
 server.on('listening', onListening);
@@ -111,17 +111,18 @@ function onError(error) {
 
 function onListening() {
   
-  var addr = server.address();
-  var bind = typeof addr === 'string'
+  let addr = server.address();
+  let bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   ('Listening on ' + bind);
-  logger.info('server listening on port' + addr.port, 'serverOnListeningHandler', 10);
+  
+  logger.info('Server listening 🚀 on '+ addr.port, 'app.js : onListening()', 1, appConfig);
   let db = mongoose.connect(appConfig.db.uri, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, retryWrites : true });
 }
 
 process.on('unhandledRejection', (reason, p) => {
-  logger.error('Unhandled Rejection at: Promise' + p + ', reason:' + reason, 'unhandledRejection', 10);
+  logger.error('Unhandled Rejection at: Promise ' + p + ', reason:' + reason, 'unhandledRejection', 10);
   // application specific logging, throwing an error, or other logic here
 });
 
@@ -130,20 +131,15 @@ process.on('unhandledRejection', (reason, p) => {
  * database connection settings
  */
 mongoose.connection.on('error', function (err) {
-  console.log('database connection error');
-  console.log(err)
-  logger.error(err,
-    'mongoose connection on error handler', 10)
+
+  logger.error(err,'mongoose connection on error handler', 10)
 
 }); // end mongoose connection error
 
 mongoose.connection.on('open', function (err) {
   if (err) {
-    console.log("database error");
-    console.log(err);
     logger.error(err, 'mongoose connection open handler', 10)
   } else {
-    console.log("database connection open success");
     logger.info("database connection open",
       'database connection open handler', 10)
   }

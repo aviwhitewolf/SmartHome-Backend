@@ -112,7 +112,7 @@ let isAuthorized = (req, res, next) => {
         .lean()
         .exec((err, result) => {
   
-          console.log(result)
+          logger.info('Verify User:',result, "auth.js : verifyUser()", 1)
   
             if (err) {
          

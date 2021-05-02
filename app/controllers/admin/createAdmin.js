@@ -138,3 +138,7 @@ let createAdminFunction = (req, res) => {
 module.exports = {
     createAdmin : createAdminFunction
 }// end exports
+
+
+
+// {"_id":{"$oid":"608e79a77c7237193d078fc3"},"adminId":"oVfj-3dx4","firstName":"Avinash","lastName":"Kumar","email":"avinash.7355@gmail.com","password":"$2b$10$5glitv8.8UiY1MiX/v0/k.gNgWwsEeunpY37UGhiAKWOxk3hEvBk.","level":1,"rights":"R_CAH","mobileNumber":9418290434,"country":"INR","createdBy":"","lastModifiedBy":"","lastModified":{"$date":"2021-05-02T10:06:31.000Z"},"createdOn":{"$date":"2021-05-02T10:06:31.000Z"},"isDelete":0,"isDeleteBy":"","__v":0}

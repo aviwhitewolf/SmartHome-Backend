@@ -46,6 +46,11 @@ const DailyUserPlan = new Schema({
     default : 0
   },
 
+  requestPerDayLimit :{
+    type : Number,
+    default : 0
+  },
+
   lastModified: {
     type: Date,
     default: time.now()

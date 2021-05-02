@@ -69,8 +69,9 @@ let setServer = (server) => {
         })
 
         socket.on('set-user', (data) => {
-
-            setUserService.setUser()
+            
+            data.socketId = socket.id
+            setUserService.setUser(data)
             .then((resolve) => {
 
                 socket.join(data.room)

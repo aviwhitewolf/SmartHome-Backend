@@ -1,18 +1,18 @@
 // connecting with sockets.
 const socket = io('http://localhost:3000');
 
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6Il9iN2xidTVhbyIsImlhdCI6MTYxMDAzNTY4ODA5NiwiZXhwIjoxNjEwMzM4MDg4LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiUWx1NU5IOWQyIiwiZmlyc3ROYW1lIjoiQXZpbmFzaCIsImxhc3ROYW1lIjoiS3VtYXIiLCJlbWFpbCI6ImF2aW5hc2guNzM1NUBnbWFpbC5jb20iLCJtb2JpbGVOdW1iZXIiOjk0MTgyOTA0MzQsImNvdW50cnkiOiJJbmRpYSJ9fQ.mk1ZivfluIKSDCpVs9Gz4WOOTP76ygThkebMTAsgYzU"
-const homeId = 'S--W6DbxU';
-const roomId = '6QpZ_vI7Y';
+const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6IlcwMWVNb3MxTSIsImlhdCI6MTYxOTk1MDY5NjU4OSwiZXhwIjoxNjIwMjUzMDk2LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiekRvU3NMZU5RIiwiZmlyc3ROYW1lIjoiQXNoaXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoiYXZpODg5NDczNTVAZ21haWwuY29tIiwibW9iaWxlTnVtYmVyIjo5ODc2NTQzMjExLCJjb3VudHJ5IjoiSU4ifX0.eutnWbi500IHMI3Rd6ztfHoqay8YIF_SwptWHXI7aqc"
+const homeId = 'a-coIva72';
+const roomId = 'XV2u03Fl1';
 const devices = [
   {
-    deviceId: 'l4LJ06xN-',
+    deviceId: 'p13j55UIa',
     state: 0,
     voltage: 150,
     extra: ''
   },
   {
-    deviceId: 'xA5OqZ6fy2',
+    deviceId: 'M7ftRHW6v',
     state: 1,
     voltage: 255,
     extra: ''

@@ -188,7 +188,6 @@ let createDeviceFunction = (req, res) => {
     //             extra         : extra
     //         })
 
-    //         // console.log(newDevice)
 
     //         newDevice.save((err, result) => {
 
