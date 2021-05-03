@@ -177,64 +177,66 @@ let disconnectDeviceAndUser = (data) => {
 
                         if (data.deleteDeviceFromRedis) {
 
-                            let typeText = "", socketText = "";
-
-                            typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-                            socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
-
-                            subArray.push("hmset", userHashName, `${data.userId}.homes`, data.userHash.homes)
+                            subArray.push("hdel", userHashName, `${data.userId}.homes`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit)
+                            subArray.push("hdel", userHashName, `${data.userId}.homeLimit`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome)
+                            subArray.push("hdel", userHashName, `${data.userId}.connectedHome`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit)
+                            subArray.push("hdel", userHashName, `${data.userId}.connectedRoomLimit`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom)
+                            subArray.push("hdel", userHashName, `${data.userId}.connectedRoom`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.requestPerDayLimit`, data.userHash.requestPerDayLimit)
+                            subArray.push("hdel", userHashName, `${data.userId}.requestPerDayLimit`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.requestPerDay`, data.userHash.requestPerDay)
+                            subArray.push("hdel", userHashName, `${data.userId}.requestPerDay`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.connectedDeviceLimit`, data.userHash.connectedDeviceLimit)
+                            subArray.push("hdel", userHashName, `${data.userId}.connectedDeviceLimit`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.connectedDevice`, data.userHash.connectedDevice)
+                            subArray.push("hdel", userHashName, `${data.userId}.connectedDevice`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
-                            subArray.push("hmset", userHashName, `${data.userId}.userId`, data.userHash.userId)
+                            subArray.push("hdel", userHashName, `${data.userId}.userId`)
                             arrayToDelete.push(subArray)
                             subArray = []
 
                             redis
-                                .pipeline(
-                                    data.arrayToDelete
-                                )
+                                .pipeline(data.arrayToDelete)
                                 .exec((err, result) => {
 
                                     if (err) {
 
                                         return reject(response.generate(true, 'Unable to delete user data from realtime database', 500, null))
 
-                                    }
+                                    } else if (result[0][1][0]) {
 
-                                    return resolve(response.generate(true, 'User details deleted successfully from realtime database', 200, data))
+                                        /*
+                                        TODO : Emit a event to update user data to mongodb
+                                        */
+                                        return resolve(response.generate(true, 'User details deleted successfully from realtime database', 200, data))
+
+                                    } else {
+
+                                        return reject(response.generate(true, 'Unable to delete user data from realtime database', 500, null))
+
+                                    }
 
                                 })
 
@@ -254,17 +256,13 @@ let disconnectDeviceAndUser = (data) => {
 
                 })
 
-
             }
 
-
         } catch (error) {
-
 
             logger.error('Internal server Error', 'socketLib : services : socketIo : disconnectDeviceAndUser', 10, err)
             let apiResponse = response.generate(true, 'Internal server error', 500, null)
             reject(apiResponse)
-
 
         }
 
@@ -274,4 +272,4 @@ let disconnectDeviceAndUser = (data) => {
 
 module.exports = {
     disconnectDeviceAndUser: disconnectDeviceAndUser
-}// end exports
+}
