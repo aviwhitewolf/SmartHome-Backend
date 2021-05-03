@@ -236,7 +236,7 @@ let setUsers = (data) => {
 
             }
 
-            let addDeviceToRedis = (input) => {
+            let addDeviceToArray = (input) => {
 
                 let data = input.data
 
@@ -609,7 +609,7 @@ let setUsers = (data) => {
                          TODO : Add device to SocketIO room
                         */
                         checkIntoMongoDb(result.data)
-                            .then(addDeviceToRedis)
+                            .then(addDeviceToArray)
                             .then(updateUserToRedis)
 
                     } else if (result.data.forward) {
@@ -618,7 +618,7 @@ let setUsers = (data) => {
                          TODO : verify the home and device from mongoDB database
                         */
                         checkIntoMongoDb(result.data)
-                            .then(addDeviceToRedis)
+                            .then(addDeviceToArray)
                             .then(updateUserToRedis)
 
 
