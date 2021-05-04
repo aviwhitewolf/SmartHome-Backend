@@ -76,56 +76,26 @@ let disconnectDeviceAndUser = (data) => {
                         for (let index = 0; index < data.devices.length; index++) {
 
                             let device = data.devices[index];
-                            let subArray = []
 
                             let typeText = "", socketText = "";
 
                             typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
                             socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
 
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.homeId`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.roomId`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.userId`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.deviceId`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.state`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.voltage`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.extra`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.${typeText}`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.${socketText}`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", deviceHashName, `${device.deviceId}.${socketText}`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hincrby", userHashName, `${data.userId.connectedDevice}`, -1)
-                            arrayToDelete.push(subArray)
-                            subArray = []
+                            arrayToDelete.push(
+                                ["hdel", deviceHashName, `${device.deviceId}.homeId`],
+                                ["hdel", deviceHashName, `${device.deviceId}.roomId`],
+                                ["hdel", deviceHashName, `${device.deviceId}.userId`],
+                                ["hdel", deviceHashName, `${device.deviceId}.deviceId`],
+                                ["hdel", deviceHashName, `${device.deviceId}.state`],
+                                ["hdel", deviceHashName, `${device.deviceId}.voltage`],
+                                ["hdel", deviceHashName, `${device.deviceId}.extra`],
+                                ["hdel", deviceHashName, `${device.deviceId}.${typeText}`],
+                                ["hdel", deviceHashName, `${device.deviceId}.${socketText}`],
+                                ["hdel", deviceHashName, `${device.deviceId}.${socketText}`],
+                                ["hincrby", userHashName, `${data.userId.connectedDevice}`, -1]
+                            
+                            )
 
                             if (index === data.devices.length - 1) {
 
@@ -173,49 +143,22 @@ let disconnectDeviceAndUser = (data) => {
 
                         let data = input.data
                         let arrayToDelete = []
-                        let subArray = []
 
                         if (data.deleteDeviceFromRedis) {
 
-                            subArray.push("hdel", userHashName, `${data.userId}.homes`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.homeLimit`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.connectedHome`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.connectedRoomLimit`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.connectedRoom`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.requestPerDayLimit`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.requestPerDay`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.connectedDeviceLimit`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.connectedDevice`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
-
-                            subArray.push("hdel", userHashName, `${data.userId}.userId`)
-                            arrayToDelete.push(subArray)
-                            subArray = []
+                            arrayToDelete.push(
+                                ["hdel", userHashName, `${data.userId}.homes`],
+                                ["hdel", userHashName, `${data.userId}.homeLimit`],
+                                ["hdel", userHashName, `${data.userId}.connectedHome`],
+                                ["hdel", userHashName, `${data.userId}.connectedRoomLimit`],
+                                ["hdel", userHashName, `${data.userId}.connectedRoom`],
+                                ["hdel", userHashName, `${data.userId}.requestPerDayLimit`],
+                                ["hdel", userHashName, `${data.userId}.requestPerDay`],
+                                ["hdel", userHashName, `${data.userId}.connectedDeviceLimit`],
+                                ["hdel", userHashName, `${data.userId}.connectedDevice`],
+                                ["hdel", userHashName, `${data.userId}.userId`]
+                            
+                            )
 
                             redis
                                 .pipeline(data.arrayToDelete)
@@ -269,6 +212,7 @@ let disconnectDeviceAndUser = (data) => {
     })
 
 }
+
 
 module.exports = {
     disconnectDeviceAndUser: disconnectDeviceAndUser

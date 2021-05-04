@@ -260,7 +260,6 @@ let setUsers = (data) => {
 
                             for (let index = 0; index < data.devices.length; index++) {
                                 let device = data.devices[index];
-                                let subArray = []
 
                                 if (deviceCountCheck <= data.userHash.connectedDeviceLimit) {
 
@@ -275,12 +274,10 @@ let setUsers = (data) => {
                                                     typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
                                                     socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
 
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y')
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
+                                                    arrayToInsert.push(
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId]
+                                                    )
 
                                                     if (index === data.devices.length - 1) {
                                                         data.arrayToInsert = arrayToInsert
@@ -295,46 +292,19 @@ let setUsers = (data) => {
                                                     typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
                                                     socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
 
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
 
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.userId`, device.userId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.deviceId`, device.deviceId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.state`, device.state)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.extra`, device.extra)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y')
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
-
-                                                    subArray.push("hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId)
-                                                    arrayToInsert.push(subArray)
-                                                    subArray = []
+                                                    arrayToInsert.push(
+                                                        ["hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.userId`, device.userId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.deviceId`, device.deviceId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.state`, device.state],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.extra`, device.extra],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId]
+                                                        
+                                                        )
 
                                                     if (index === data.devices.length - 1) {
                                                         data.arrayToInsert = arrayToInsert
@@ -376,26 +346,6 @@ let setUsers = (data) => {
                     }
 
                 })
-
-            }
-
-            let updateRedisDailyUserPlan = (data) => {
-
-                return new Promise((resolve, reject) => {
-
-                    try {
-
-
-                    } catch (err) {
-
-                        logger.error('Internal server Error', 'SocketIo : set-user : setUser : updateRedisDailyUserPlan', 10, err)
-                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
-                        reject(apiResponse)
-
-                    }
-
-                })
-
 
             }
 
@@ -522,54 +472,20 @@ let setUsers = (data) => {
                     try {
 
                         let data = input.data
-                        let subArray = []
 
-                        subArray.push("hmset",userHashName, `${data.userId}.homes`, data.userHash.homes)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
+                        arrayToInsert.push(
 
-                        subArray.push("hmset",userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.requestPerDayLimit`, data.userHash.requestPerDayLimit)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.requestPerDay`, data.userHash.requestPerDay)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.connectedDeviceLimit`, data.userHash.connectedDeviceLimit)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-
-                        subArray.push("hmset",userHashName, `${data.userId}.connectedDevice`, data.userHash.connectedDevice)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
-
-                        subArray.push("hmset",userHashName, `${data.userId}.userId`, data.userHash.userId)
-                        data.arrayToInsert.push(subArray)
-                        subArray = []
+                            ["hmset",userHashName, `${data.userId}.homes`, data.userHash.homes],
+                            ["hmset",userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit],
+                            ["hmset",userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome],
+                            ["hmset",userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit],
+                            ["hmset",userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom],
+                            ["hmset",userHashName, `${data.userId}.requestPerDayLimit`, data.userHash.requestPerDayLimit],
+                            ["hmset",userHashName, `${data.userId}.requestPerDay`, data.userHash.requestPerDay],
+                            ["hmset",userHashName, `${data.userId}.connectedDeviceLimit`, data.userHash.connectedDeviceLimit],
+                            ["hmset",userHashName, `${data.userId}.connectedDevice`, data.userHash.connectedDevice],
+                            ["hmset",userHashName, `${data.userId}.userId`, data.userHash.userId]
+                        )
 
                         redis
                             .pipeline(
@@ -620,8 +536,6 @@ let setUsers = (data) => {
                         checkIntoMongoDb(result.data)
                             .then(addDeviceToArray)
                             .then(updateUserToRedis)
-
-
 
                     }
 
