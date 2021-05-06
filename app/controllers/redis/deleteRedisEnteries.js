@@ -18,7 +18,7 @@ let deleteRedisEnteriesFunction = (req, res) => {
 
                 } else {
 
-                    logger.error("Plan can not be created. Admin don't have proper rights",
+                    logger.error("Admin don't have proper rights",
                         'Redis Controller : deleteRedisEnteriesFunction : checkAuthorization', 1)
                     let apiResponse = response.generate(true, "Admin don't have proper rights", 403, null)
                     reject(apiResponse)

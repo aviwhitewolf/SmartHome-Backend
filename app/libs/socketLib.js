@@ -1,6 +1,7 @@
 const socketio = require('socket.io');
 const check = require("./checkLib.js");
 const setUserService = require("./../services/socketIo/setUser");
+const updateDeviceAndUserRedis = require("../services/socketIo/updateDeviceAndUser");
 
 
 let setServer = (server) => {
@@ -71,11 +72,12 @@ let setServer = (server) => {
         socket.on('set-user', (data) => {
             
             data.socketId = socket.id
-            setUserService.setUser(data)
-            .then((resolve) => {
+            updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
+            .then((result) => {
 
-                socket.join(data.room)
-                socket.emit('set-user-success', resolve)
+                socket.leave(result.data.room)
+                delete result.data.room
+                socket.emit('disconnect-device-success', result)
 
             })
             .catch((err) => {
@@ -91,9 +93,24 @@ let setServer = (server) => {
 
 
 
-        // socket.on('disconnect', () => {
-        //     console.log("Device disconnected")
-        // })
+        socket.on('disconnect', () => {
+            let data = {};
+            data.socketId = socket.id
+            setUserService.setUser(data)
+            .then((resolve) => {
+
+                socket.join(data.room)
+                socket.emit('set-user-success', resolve)
+
+            })
+            .catch((err) => {
+
+                socket.emit('set-user-error', err)
+                socket.disconnect(0)
+
+            })
+
+        })
 
     });
 }

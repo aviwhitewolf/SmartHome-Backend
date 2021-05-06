@@ -224,9 +224,9 @@ let loginFunction = (req, res) => {
         .then(validatePassword)
         .then(generateToken)
         .then(saveToken)
-        .then((resolve) => {
+        .then((result) => {
 
-            let apiResponse = response.generate(false, 'Login Successful', 200, resolve)
+            let apiResponse = response.generate(false, 'Login Successful', 200, result)
             res.status(apiResponse.status).send(apiResponse)
 
         })

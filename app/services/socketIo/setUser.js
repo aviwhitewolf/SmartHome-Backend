@@ -255,7 +255,7 @@ let setUsers = (data) => {
                             ? homeId, roomId, userId, deviceId, state, voltage, extra
                             ! If Not then add the device to redis database
                             * If yes then just update softwareConnected or hardwareConneted = 'y' 
-                            * and set socketId1 or socketId2
+                            * and set socketIdS or socketIdH
                             */
 
                             for (let index = 0; index < data.devices.length; index++) {
@@ -267,16 +267,18 @@ let setUsers = (data) => {
                                         .hmget(deviceHashName, `${device.deviceId}.deviceId`,
                                             (err, deviceResult) => {
 
+
+                                                let typeText = "", typeDevice = '';
+
+                                                typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
+                                                typeDevice = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
+
+
                                                 if (!check.isEmpty(deviceResult[0])) {
-
-                                                    let typeText = "", socketText = "";
-
-                                                    typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-                                                    socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
 
                                                     arrayToInsert.push(
                                                         ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId]
+                                                        ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
                                                     )
 
                                                     if (index === data.devices.length - 1) {
@@ -287,12 +289,6 @@ let setUsers = (data) => {
 
                                                 } else {
 
-                                                    let typeText = "", socketText = "";
-
-                                                    typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-                                                    socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
-
-
                                                     arrayToInsert.push(
                                                         ["hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId],
                                                         ["hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId],
@@ -302,8 +298,7 @@ let setUsers = (data) => {
                                                         ["hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage],
                                                         ["hmset",deviceHashName, `${device.deviceId}.extra`, device.extra],
                                                         ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${socketText}`, data.socketId]
-                                                        
+                                                        ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
                                                         )
 
                                                     if (index === data.devices.length - 1) {
@@ -527,6 +522,11 @@ let setUsers = (data) => {
                         checkIntoMongoDb(result.data)
                             .then(addDeviceToArray)
                             .then(updateUserToRedis)
+                            .then((result) => {
+                                resolve(result)
+                            }).catch((err) => {
+                                reject(err)
+                            })
 
                     } else if (result.data.forward) {
 
@@ -536,9 +536,16 @@ let setUsers = (data) => {
                         checkIntoMongoDb(result.data)
                             .then(addDeviceToArray)
                             .then(updateUserToRedis)
+                            .then((result) => {
+                                resolve(result)
+                            }).catch((err) => {
+                                reject(err)
+                            })
 
                     }
 
+                }).catch((err) => {
+                    reject(err)
                 })
 
         } catch (error) {
