@@ -3,6 +3,10 @@ const logger = require('./../../libs/loggerLib');
 const check = require('../../libs/checkLib')
 const redisLib = require('../../libs/redisLib');
 
+
+const Redis = require("ioredis");
+const redis = new Redis();
+
 let deleteRedisEnteriesFunction = (req, res) => {
 
     //check if person is authorised to add admin, proper rights
@@ -47,40 +51,63 @@ let deleteRedisEnteriesFunction = (req, res) => {
 
             try {
 
-                let hashName, keys;
-                hashName = req.body.hashName;
-                keys = req.body.keys;
 
-                redisLib.deleteFromHash(hashName, keys, (err, result) => {
+                let arrayToDelete = []
+                let inputArray = req.body || []
 
-                    if (err) {
+                inputArray.forEach((element, index) => {
 
-                        logger.error('Unable to delete', 'Redis Controller :  deleteRedisEnteries', 10, err)
-                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
-                        reject(apiResponse)
-
-                    } else if (check.isEmpty(result)) {
-
-                        logger.error('List is Empty', 'Redis Controller :  deleteRedisEnteries', 5, err)
-                        let apiResponse = response.generate(true, 'List is Empty', 404, null)
-                        reject(apiResponse)
-
-                    } else {
-
-                        if (result > 0) {
-
-                            resolve()
-
-                        } else {
-
-                            logger.error('No entries found', 'Redis Controller :  deleteRedisEnteries', 5, err)
-                            let apiResponse = response.generate(true, 'Unable to delete', 404, null)
-                            reject(apiResponse)
-
+                    if (element.type == "user"){
+                        arrayToDelete.push(
+                            ["hdel", element.hashName, `${element.key}.homes`],
+                            ["hdel", element.hashName, `${element.key}.homeLimit`],
+                            ["hdel", element.hashName, `${element.key}.connectedHome`],
+                            ["hdel", element.hashName, `${element.key}.connectedRoomLimit`],
+                            ["hdel", element.hashName, `${element.key}.connectedRoom`],
+                            ["hdel", element.hashName, `${element.key}.requestPerDayLimit`],
+                            ["hdel", element.hashName, `${element.key}.requestPerDay`],
+                            ["hdel", element.hashName, `${element.key}.connectedDeviceLimit`],
+                            ["hdel", element.hashName, `${element.key}.connectedDevice`],
+                            ["hdel", element.hashName, `${element.key}.userId`]
+                        )
+                    }
+                    else if (element.type == "device"){
+                        arrayToDelete.push(
+                            ["hdel", element.hashName, `${element.key}.homeId`],
+                            ["hdel", element.hashName, `${element.key}.roomId`],
+                            ["hdel", element.hashName, `${element.key}.userId`],
+                            ["hdel", element.hashName, `${element.key}.deviceId`],
+                            ["hdel", element.hashName, `${element.key}.state`],
+                            ["hdel", element.hashName, `${element.key}.voltage`],
+                            ["hdel", element.hashName, `${element.key}.extra`],
+                            ["hdel", element.hashName, `${element.key}.harwardConnected`],
+                            ["hdel", element.hashName, `${element.key}.softwareConnected`]
+                        )
                         }
+                    if (index == inputArray.length - 1) {
+
+
+                        redis.pipeline(
+                            arrayToDelete
+                        ).exec((err, result) => {
+
+                            if (err) {
+
+                                logger.error('Unable to delete', 'Redis Controller :  deleteRedisEnteries', 10, err)
+                                let apiResponse = response.generate(true, 'Internal server error', 500, null)
+                                reject(apiResponse)
+
+                            } else {
+
+                                let apiResponse = response.generate(true, 'Data deleted Successfully', 200, result)
+                                resolve(apiResponse)
+
+                            }
+                        })
 
                     }
-                })
+
+                });
 
             } catch (err) {
 
@@ -97,10 +124,9 @@ let deleteRedisEnteriesFunction = (req, res) => {
 
     checkAuthorization(req, res)
         .then(deleteRedisEnteries)
-        .then((resolve) => {
+        .then((result) => {
 
-            let apiResponse = response.generate(false, 'Entries deleted successfuly', 200, resolve);
-            res.status(apiResponse.status).send(apiResponse)
+            res.status(result.status).send(result)
 
         })
         .catch((err) => {

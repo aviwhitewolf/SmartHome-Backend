@@ -236,114 +236,6 @@ let setUsers = (data) => {
 
             }
 
-            let addDeviceToArray = (input) => {
-
-                let data = input.data
-
-                return new Promise((resolve, reject) => {
-
-                    try {
-
-                        if (Array.isArray(data.devices) && data.devices.length > 0) {
-
-
-                            let deviceCountCheck = data.userHash.connectedDevice;
-                            let arrayToInsert = []
-
-                            /*
-                            * Get devices data from redis, from hash - ConnectedDevices
-                            ? homeId, roomId, userId, deviceId, state, voltage, extra
-                            ! If Not then add the device to redis database
-                            * If yes then just update softwareConnected or hardwareConneted = 'y' 
-                            * and set socketIdS or socketIdH
-                            */
-
-                            for (let index = 0; index < data.devices.length; index++) {
-                                let device = data.devices[index];
-
-                                if (deviceCountCheck <= data.userHash.connectedDeviceLimit) {
-
-                                    redis
-                                        .hmget(deviceHashName, `${device.deviceId}.deviceId`,
-                                            (err, deviceResult) => {
-
-
-                                                let typeText = "", typeDevice = '';
-
-                                                typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-                                                typeDevice = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-
-
-                                                if (!check.isEmpty(deviceResult[0])) {
-
-                                                    arrayToInsert.push(
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
-                                                    )
-
-                                                    if (index === data.devices.length - 1) {
-                                                        data.arrayToInsert = arrayToInsert
-                                                        data.userHash.connectedDevice = deviceCountCheck
-                                                         return resolve(response.generate(true, 'Device Added', 200, data))
-                                                    }
-
-                                                } else {
-
-                                                    arrayToInsert.push(
-                                                        ["hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.userId`, device.userId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.deviceId`, device.deviceId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.state`, device.state],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.extra`, device.extra],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
-                                                        )
-
-                                                    if (index === data.devices.length - 1) {
-                                                        data.arrayToInsert = arrayToInsert
-                                                        data.userHash.connectedDevice = deviceCountCheck
-                                                       return resolve(response.generate(true, 'Device Added', 200, data))
-                                                    }
-
-                                                }
-
-                                            });
-
-                                } else {
-
-                                    if (index === data.devices.length - 1) {
-                                        data.arrayToInsert = arrayToInsert
-                                        data.userHash.connectedDevice = deviceCountCheck
-                                        return resolve(response.generate(true, 'Device Added', 200, data))
-
-                                        // return reject(response.generate(true, 'Device Added, Max Device Limit reached', 400, null))
-                                    }
-                                }
-
-                                deviceCountCheck++
-                            }
-
-                        } else {
-
-                            logger.error('Devices array is empty', 'SocketLib : checkUserFromRedis', 2)
-                            reject(response.generate(true, 'Devices array is empty', 400, null))
-
-                        }
-
-                    } catch (err) {
-
-                        logger.error('Internal server Error', 'SocketIo : set-user : setUser : adddeviceToRedis', 10, err)
-                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
-                        reject(apiResponse)
-
-                    }
-
-                })
-
-            }
-
             let checkIntoMongoDb = (data) => {
 
                 let input = data.data
@@ -460,6 +352,114 @@ let setUsers = (data) => {
 
             }
 
+            let addDeviceToArray = (input) => {
+
+                let data = input.data
+
+                return new Promise((resolve, reject) => {
+
+                    try {
+
+                        if (Array.isArray(data.devices) && data.devices.length > 0) {
+
+
+                            let deviceCountCheck = data.userHash.connectedDevice;
+                            let arrayToInsert = []
+
+                            /*
+                            * Get devices data from redis, from hash - ConnectedDevices
+                            ? homeId, roomId, userId, deviceId, state, voltage, extra
+                            ! If Not then add the device to redis database
+                            * If yes then just update softwareConnected or hardwareConneted = 'y' 
+                            * and set socketIdS or socketIdH
+                            */
+
+                            for (let index = 0; index < data.devices.length; index++) {
+                                let device = data.devices[index];
+
+                                if (deviceCountCheck <= data.userHash.connectedDeviceLimit) {
+
+                                    redis
+                                        .hmget(deviceHashName, `${device.deviceId}.deviceId`,
+                                            (err, deviceResult) => {
+
+
+                                                let typeText = "", typeDevice = '';
+
+                                                typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
+                                                typeDevice = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
+
+
+                                                if (!check.isEmpty(deviceResult[0])) {
+
+                                                    arrayToInsert.push(
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
+                                                        ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
+                                                    )
+
+                                                    if (index === data.devices.length - 1) {
+                                                        data.arrayToInsert = arrayToInsert
+                                                        data.userHash.connectedDevice = deviceCountCheck
+                                                         return resolve(response.generate(true, 'Device Added', 200, data))
+                                                    }
+
+                                                } else {
+
+                                                    arrayToInsert.push(
+                                                        ["hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.userId`, device.userId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.deviceId`, device.deviceId],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.state`, device.state],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.extra`, device.extra],
+                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
+                                                        ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
+                                                        )
+
+                                                    if (index === data.devices.length - 1) {
+                                                        data.arrayToInsert = arrayToInsert
+                                                        data.userHash.connectedDevice = deviceCountCheck
+                                                       return resolve(response.generate(true, 'Device Added', 200, data))
+                                                    }
+
+                                                }
+
+                                            });
+
+                                } else {
+
+                                    if (index === data.devices.length - 1) {
+                                        data.arrayToInsert = arrayToInsert
+                                        data.userHash.connectedDevice = deviceCountCheck
+                                        return resolve(response.generate(true, 'Device Added', 200, data))
+
+                                        // return reject(response.generate(true, 'Device Added, Max Device Limit reached', 400, null))
+                                    }
+                                }
+
+                                deviceCountCheck++
+                            }
+
+                        } else {
+
+                            logger.error('Devices array is empty', 'SocketLib : checkUserFromRedis', 2)
+                            reject(response.generate(true, 'Devices array is empty', 400, null))
+
+                        }
+
+                    } catch (err) {
+
+                        logger.error('Internal server Error', 'SocketIo : set-user : setUser : adddeviceToRedis', 10, err)
+                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
+                        reject(apiResponse)
+
+                    }
+
+                })
+
+            }
+
             let updateUserToRedis = (input) => {
 
                 return new Promise((resolve, reject) => {
@@ -515,7 +515,7 @@ let setUsers = (data) => {
                 .then(checkUserFromRedisAndValidate)
                 .then((result) => {
 
-                    if (result.status == 200 && result.data.forward) {
+                    // if (result.status == 200 && result.data.forward) {
                         /*
                          TODO : Add device to SocketIO room
                         */
@@ -528,21 +528,9 @@ let setUsers = (data) => {
                                 reject(err)
                             })
 
-                    } else if (result.data.forward) {
+                    // } else{
 
-                        /*
-                         TODO : verify the home and device from mongoDB database
-                        */
-                        checkIntoMongoDb(result.data)
-                            .then(addDeviceToArray)
-                            .then(updateUserToRedis)
-                            .then((result) => {
-                                resolve(result)
-                            }).catch((err) => {
-                                reject(err)
-                            })
-
-                    }
+                    // }
 
                 }).catch((err) => {
                     reject(err)

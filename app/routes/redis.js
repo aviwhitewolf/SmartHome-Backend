@@ -13,15 +13,16 @@ module.exports.setRouter = (app) => {
 
     app.post(`${baseUrl}/getEnteries`, auth.isAuthorized,
         [
-            body('hashName').isString().withMessage('Hash Name should be string')
+            body('*.hashName').isString().withMessage('Hash Name should be string')
         ],
         inputValidationMiddleware.validate,
         getAllRedisController.allEnteries);
 
     app.post(`${baseUrl}/deleteEnteries`, auth.isAuthorized,
         [
-            body('hashName').isString().withMessage('Hash Name should be string'),
-            body('keys.*').isString().withMessage('keys should have string values'),
+            body('*.hashName').isString().withMessage('Hash Name should be string'),
+            body('*.key').isString().withMessage('keys should have string values'),
+            body('*.type').isString().withMessage('Type should have string values')
         ],
         inputValidationMiddleware.validate,
         deleteRedisController.deleteEnteries);

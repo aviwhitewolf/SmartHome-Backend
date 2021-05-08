@@ -18,6 +18,47 @@ let setServer = (server) => {
 
         socket.emit("verifyUser", 'Test');
 
+        socket.on('set-user', (data) => {
+
+            data.socketId = socket.id
+            setUserService.setUser(data)
+            .then((result) => {
+
+                socket.join(result.data.room)
+                socket.emit('set-user-success', result)
+
+            })
+            .catch((err) => {
+
+                socket.emit('set-user-error', err)
+                socket.disconnect(0)
+
+            })
+
+        })
+
+
+        socket.on('disconnect', () => {
+            let data = {}
+            data.socketId = socket.id
+            updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
+            .then((result) => {
+
+                socket.leave(result.data.room)
+                delete result.data.room
+                socket.emit('disconnect-device-success', result)
+
+            })
+            .catch((err) => {
+
+                socket.emit('set-user-error', err)
+                socket.disconnect(0)
+
+            })
+
+        })
+
+
         socket.on('device-state-change', (data) => {
 
             if (socket.hasOwnProperty("userId") && !check.isEmpty(socket.userId)) {
@@ -60,57 +101,6 @@ let setServer = (server) => {
 
         }) // end of listening set-user event
 
-        socket.on('change-state', (data) => {
-
-
-            let eventName = 'update-state-' + data.homeId
-            console.log(data);
-            myIo.emit(eventName, data)
-
-        })
-
-        socket.on('set-user', (data) => {
-            
-            data.socketId = socket.id
-            updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
-            .then((result) => {
-
-                socket.leave(result.data.room)
-                delete result.data.room
-                socket.emit('disconnect-device-success', result)
-
-            })
-            .catch((err) => {
-
-                socket.emit('set-user-error', err)
-                socket.disconnect(0)
-
-            })
-
-        })
-
-
-
-
-
-        socket.on('disconnect', () => {
-            let data = {};
-            data.socketId = socket.id
-            setUserService.setUser(data)
-            .then((resolve) => {
-
-                socket.join(data.room)
-                socket.emit('set-user-success', resolve)
-
-            })
-            .catch((err) => {
-
-                socket.emit('set-user-error', err)
-                socket.disconnect(0)
-
-            })
-
-        })
 
     });
 }

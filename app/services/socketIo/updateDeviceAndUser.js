@@ -5,7 +5,7 @@ const config = require('../../config/config')
 const tokenLib = require("../../libs/tokenLib.js");
 const check = require("../../libs/checkLib.js");
 const response = require('../../libs/responseLib');
-const redisLib = require('../../libs/redisLib');
+
 // const eventEmitter = new events.EventEmitter();
 
 const Redis = require("ioredis");

@@ -3,6 +3,10 @@ const logger = require('./../../libs/loggerLib');
 const check = require('../../libs/checkLib')
 const redisLib = require('../../libs/redisLib');
 
+const Redis = require("ioredis");
+const redis = new Redis();
+
+
 let getAllRedisEnteriesFunction = (req, res) => {
 
     //check if person is authorised to add admin, proper rights
@@ -43,52 +47,45 @@ let getAllRedisEnteriesFunction = (req, res) => {
 
     let getAllRedisEnteries = () => {
 
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
 
             try {
 
-                let hashName = req.body.hashName;
 
-                redisLib.getAllDataFromHash(hashName,
-                    (err, result) => {
+                let arrayToDisplay = []
+                let inputArray = req.body
 
-                        if (err) {
+                await inputArray.forEach((element, index) => {
 
-                            logger.error('Internal server Error', 'Redis Controller :  getAllRedisEnteries', 10, err)
-                            let apiResponse = response.generate(true, 'Internal server error', 500, null)
-                            reject(apiResponse)
+                    arrayToDisplay.push(
+                        ["hscan", element.hashName, 0, "MATCH", `${element.key}.*`]
+                    )
 
-                        } else if (check.isEmpty(result)) {
+                    if (index == inputArray.length - 1) {
 
-                            logger.error('List is Empty', 'Redis Controller :  getAllRedisEnteries', 5, err)
-                            let apiResponse = response.generate(true, 'List is Empty', 404, null)
-                            reject(apiResponse)
 
-                        } else {
+                        redis.pipeline(
+                            arrayToDisplay
+                        ).exec((err, result) => {
 
-                            let jsonData;
+                            if (err) {
 
-                            if (typeof result === 'object') {
-
-                                jsonData = result
-
-                            } else if (typeof result === 'string') {
-
-                                jsonData = JSON.parse(result)
+                                logger.error('Internal server Error', 'Redis Controller :  getAllRedisEnteries', 10, err)
+                                let apiResponse = response.generate(true, 'Internal server error', 500, null)
+                                reject(apiResponse)
 
                             } else {
 
-                                jsonData = null
+                                resolve(response.generate(false, 'Success', 200, result))
 
                             }
 
-                            resolve(jsonData)
-
-                        }
-
-                    });
+                        });
 
 
+                    }
+
+                });
 
             } catch (err) {
 
@@ -104,10 +101,9 @@ let getAllRedisEnteriesFunction = (req, res) => {
 
     checkAuthorization(req, res)
         .then(getAllRedisEnteries)
-        .then((resolve) => {
+        .then((result) => {
 
-            let apiResponse = response.generate(false, 'Success', 200, resolve);
-            res.status(apiResponse.status).send(apiResponse)
+            res.status(result.status).send(result)
 
         })
         .catch((err) => {
