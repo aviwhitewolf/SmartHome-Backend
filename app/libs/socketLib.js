@@ -1,5 +1,7 @@
 const socketio = require('socket.io');
 const check = require("./checkLib.js");
+const response = require('./../libs/responseLib');
+
 const setUserService = require("./../services/socketIo/setUser");
 const updateDeviceAndUserRedis = require("../services/socketIo/updateDeviceAndUser");
 
@@ -20,41 +22,64 @@ let setServer = (server) => {
 
         socket.on('set-user', (data) => {
 
-            data.socketId = socket.id
-            setUserService.setUser(data)
-            .then((result) => {
+            try {
 
-                socket.join(result.data.room)
-                socket.emit('set-user-success', result)
+                data.socketId = socket.id
+                setUserService.setUser(data)
+                    .then((result) => {
 
-            })
-            .catch((err) => {
+                        socket.join(result.room)
+                        socket.emit('set-user-success', response.generate(false, 'Device and user added to realtime database', 200, null))
 
-                socket.emit('set-user-error', err)
-                socket.disconnect(0)
+                    }).catch((err) => {
 
-            })
+                        socket.emit('set-user-error', err)
+                        if (socket.connected) {
+                            socket.disconnect();
+                        }
+
+
+                    })
+
+            } catch (err) {
+                console.log("Error", err)
+                if (socket.connected) {
+                    socket.emit('set-user-error', response.generate(true, 'Internal server error', 500, null))
+                }
+            }
 
         })
 
 
         socket.on('disconnect', () => {
-            let data = {}
-            data.socketId = socket.id
-            updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
-            .then((result) => {
+            try {
 
-                socket.leave(result.data.room)
-                delete result.data.room
-                socket.emit('disconnect-device-success', result)
 
-            })
-            .catch((err) => {
+                console.log("Device Disconnected")
+                let data = {}
+                    
+                    data.socketId = socket.id
+                    updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
+                        .then((result) => {
 
-                socket.emit('set-user-error', err)
-                socket.disconnect(0)
+                            socket.leave(result.room)
+                            socket.emit('disconnect-device-success', response.generate(true, 'Device disconnected from realtime database', 200, null))
 
-            })
+                        })
+                        .catch((err) => {
+
+                            socket.emit('set-user-error', err)
+                            socket.close();
+
+                        })
+                
+
+            } catch (err) {
+                console.log("Error", err)
+                if (socket.connected) {
+                    socket.emit('set-user-error', response.generate(true, 'Internal server error', 500, null))
+                }
+            }
 
         })
 

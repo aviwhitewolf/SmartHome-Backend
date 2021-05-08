@@ -140,23 +140,23 @@ let setUsers = (data) => {
                                         "userId": result[9][1][0]
                                     }
 
-                                    let connectedHome = data.userHash.connectedHome
-                                    let homeLimit = data.userHash.homeLimit
-                                    let connectedRoom = data.userHash.connectedRoom
-                                    let connectedRoomLimit = data.userHash.connectedRoomLimit
-
                                     /*
                                     ? RequestPerDay check
                                     */
                                     if (data.userHash.requestPerDay >= data.userHash.requestPerDayLimit)
-                                        return reject(response.generate(true, 'Today request quota is over, watch ad to get more request or update your plan', 400, data))
+                                        return reject(response.generate(true, 'Today request quota is over, watch ad to get more request or update your plan', 400, null))
 
-
+                                    /*
+                                    If connected Device limit is reached
+                                    */
+                                    if(data.userHash.connectedDevice >= data.userHash.connectedDeviceLimit)
+                                        return reject(response.generate(true, 'Can not add more device,try disconnecting some device from mobile app, website', 400, null))
+    
                                     /*
                                     ? If New Home, check homeLimit
                                     * Add New Home and Room, update home count and room count
                                     */
-                                    if (data.userHash.homes[data.data.homeId] == undefined && (connectedHome + 1) < homeLimit) {
+                                    if (data.userHash.homes[data.data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.homeLimit) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
@@ -165,36 +165,38 @@ let setUsers = (data) => {
 
                                         homes = {
                                             [data.homeId]: {
-                                                [data.roomId]: connectedRoom + 1
+                                                [data.roomId]: data.userHash.connectedRoom + 1
                                             }
                                         }
 
                                         data.userHash.homes = JSON.stringify(homes)
                                         data.userHash.connecteHome = data.userHash.connecteHome + 1
-                                        data.userHash.connectedRoom = connectedRoom + 1
+                                        data.userHash.connectedRoom = data.userHash.connectedRoom + 1
 
-                                        resolve(response.generate(true, 'Home and room added in redis', 200, data))
+                                        // resolve(response.generate(false, 'Home and room added in redis', 200, data))
 
+                                        resolve(data)
 
                                         /*
                                         ? Old Home and new room
                                         * Add new room to old home and update room count
                                         */
                                     } else if (data.userHash.homes[data.data.homeId][data.data.roomId] == undefined 
-                                        && (connectedRoom) < connectedRoomLimit) {
+                                        && (data.userHash.connectedRoom) < data.userHash.connectedRoomLimit) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
 
                                         let homes = data.userHash.homes
 
-                                        homes[data.data.homeId][data.data.roomId] = connectedRoom + 1
+                                        homes[data.data.homeId][data.data.roomId] = data.userHash.connectedRoom + 1
 
                                         data.userHash.homes = JSON.stringify(homes)
-                                        data.userHash.connectedRoom = connectedRoom + 1
+                                        data.userHash.connectedRoom = data.userHash.connectedRoom + 1
 
-                                        resolve(response.generate(true, 'Room added to redis', 200, data))
-
+                                        // resolve(response.generate(false, 'Room added to redis', 200, data))
+                                            
+                                        resolve(data)
                                         /*
                                         ? If home and room both are present
                                         */
@@ -205,21 +207,21 @@ let setUsers = (data) => {
                                         data.forward = true
                                         data.userHash.homes = JSON.stringify(data.userHash.homes)
 
-                                        resolve(response.generate(true, 'Home and room already present', 200, data))
-
+                                        // resolve(response.generate(false, 'Home and room already present', 200, data))
+                                        resolve(data)
                                         /*
                                         ? Else part
                                         */
                                     } else {
 
-                                        reject(response.generate(true, 'Update your Plan, Home or room limit reached', 400, data))
+                                        reject(response.generate(true, 'Update your Plan, Home or room limit reached', 400, null))
 
                                     }
 
                                 } else {
                                     data.forward = true
-                                    resolve(response.generate(true, 'User record not present in realtime database ', 400, data))
-
+                                    // resolve(response.generate(false, 'User record not present in realtime database ', 400, data))
+                                    resolve(data)
                                 }
 
                             });
@@ -238,14 +240,9 @@ let setUsers = (data) => {
 
             let checkIntoMongoDb = (data) => {
 
-                let input = data.data
-                input.userId = data.userId
-                input.socketId = data.socketId
-                input.userHash = data.userHash
-
                 return new Promise((resolve, reject) => {
 
-                    try {
+                    try {        
 
                         DailyUserPlanModel.aggregate(
                             [
@@ -271,11 +268,11 @@ let setUsers = (data) => {
                                                         '$and': [
                                                             {
                                                                 '$in': [
-                                                                    '$deviceId', '$deviceId', input.devices.map(x => x["deviceId"])
+                                                                    '$deviceId', '$deviceId', data.devices.map(x => x["deviceId"])
                                                                 ],
                                                                 '$in': [
                                                                     '$roomId', [
-                                                                        input.roomId
+                                                                        data.roomId
                                                                     ]
                                                                 ]
                                                             }
@@ -306,18 +303,19 @@ let setUsers = (data) => {
 
                                     let result = res[0]
 
-                                    if (input.devices.length === result.devices.length) {
+                                    if (data.devices.length === result.devices.length) {
 
 
                                         let homes = {
-                                            [input.homeId]: {
-                                                [input.roomId]: result.roomLimit + 1
+                                            [data.homeId]: {
+                                                [data.roomId]: result.roomLimit + 1
                                             }
                                         }
-                                        input.devices = result.devices
+                                        data.devices = result.devices
 
-                                        if (input.userHash == undefined || input.userHash == null || input.userHash == "")
-                                            input.userHash = {
+                                        if ((data.userHash == undefined || data.userHash == null || data.userHash == "") 
+                                        && !data.userVerifiedFromRedis)
+                                            data.userHash = {
                                                 "homes": JSON.stringify(homes),
                                                 "homeLimit": result.homeLimit,
                                                 "connectedHome": 1,
@@ -330,7 +328,8 @@ let setUsers = (data) => {
                                                 "userId": result.userId
                                             }
 
-                                        resolve(response.generate(false, 'Device found', 200, input))
+                                        // resolve(response.generate(false, 'Device found', 200, input))
+                                        resolve(data)
                                     }
 
                                     else reject(response.generate(true, 'Incorrect device Ids', 404, null))
@@ -352,13 +351,12 @@ let setUsers = (data) => {
 
             }
 
-            let addDeviceToArray = (input) => {
-
-                let data = input.data
+            let addDeviceToArray = (data) => {
 
                 return new Promise((resolve, reject) => {
 
                     try {
+
 
                         if (Array.isArray(data.devices) && data.devices.length > 0) {
 
@@ -386,8 +384,8 @@ let setUsers = (data) => {
 
                                                 let typeText = "", typeDevice = '';
 
-                                                typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-                                                typeDevice = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
+                                                typeText = (data['type'] == 's' ? "softwareConnected" : "harwardConnected")
+                                                typeDevice = (data['type'] == 's' ? "softwareConnected" : "harwardConnected")
 
 
                                                 if (!check.isEmpty(deviceResult[0])) {
@@ -400,7 +398,8 @@ let setUsers = (data) => {
                                                     if (index === data.devices.length - 1) {
                                                         data.arrayToInsert = arrayToInsert
                                                         data.userHash.connectedDevice = deviceCountCheck
-                                                         return resolve(response.generate(true, 'Device Added', 200, data))
+                                                        //  return resolve(response.generate(false, 'Device Added', 200, data))
+                                                        return resolve(data)
                                                     }
 
                                                 } else {
@@ -420,7 +419,8 @@ let setUsers = (data) => {
                                                     if (index === data.devices.length - 1) {
                                                         data.arrayToInsert = arrayToInsert
                                                         data.userHash.connectedDevice = deviceCountCheck
-                                                       return resolve(response.generate(true, 'Device Added', 200, data))
+                                                    //    return resolve(response.generate(false, 'Device Added', 200, data))
+                                                          return resolve(data)
                                                     }
 
                                                 }
@@ -432,7 +432,8 @@ let setUsers = (data) => {
                                     if (index === data.devices.length - 1) {
                                         data.arrayToInsert = arrayToInsert
                                         data.userHash.connectedDevice = deviceCountCheck
-                                        return resolve(response.generate(true, 'Device Added', 200, data))
+                                        // return resolve(response.generate(false, 'Device Added', 200, data))
+                                        return resolve(data)
 
                                         // return reject(response.generate(true, 'Device Added, Max Device Limit reached', 400, null))
                                     }
@@ -460,15 +461,14 @@ let setUsers = (data) => {
 
             }
 
-            let updateUserToRedis = (input) => {
+            let updateUserToRedis = (data) => {
 
                 return new Promise((resolve, reject) => {
 
                     try {
 
-                        let data = input.data
-
-                        arrayToInsert.push(
+                        
+                        data.arrayToInsert.push(
 
                             ["hmset",userHashName, `${data.userId}.homes`, data.userHash.homes],
                             ["hmset",userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit],
@@ -494,8 +494,8 @@ let setUsers = (data) => {
 
                                 }
 
-                                return resolve(response.generate(true, 'User details updated successfully to realtime database', 200, data))
-
+                                // return resolve(response.generate(false, 'User details updated successfully to realtime database', 200, data))
+                                return resolve(data)
                             })
 
                     } catch (err) {
@@ -519,11 +519,11 @@ let setUsers = (data) => {
                         /*
                          TODO : Add device to SocketIO room
                         */
-                        checkIntoMongoDb(result.data)
+                        checkIntoMongoDb(result)
                             .then(addDeviceToArray)
                             .then(updateUserToRedis)
                             .then((result) => {
-                                resolve(result)
+                                resolve(response.generate(false, 'User and device added realtime database', 500, null))
                             }).catch((err) => {
                                 reject(err)
                             })

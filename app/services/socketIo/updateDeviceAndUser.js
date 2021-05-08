@@ -40,13 +40,14 @@ let updateDeviceAndUserRedis = (data) => {
 
                                 return reject(response.generate(true, 'Unable to find device from realtime database', 500, null))
 
-                            } else if (!check.isEmpty(result[0][0][0])) {
+                            } else if (!check.isEmpty(result)) {
 
                                 
-                                let mData = result[0][0][0].split('|')
+                                let mData = result.split('|')
                                 data.deviceId = mData[0]
                                 data.deviceType = mData[1]
-                                return resolve(response.generate(true, 'Device details found successfully from realtime database', 200, data))
+                                data.userId = mData[2]
+                                return resolve(data)
 
                             } else {
 
@@ -67,23 +68,20 @@ let updateDeviceAndUserRedis = (data) => {
 
             }
 
-            let updateDeviceToRedis = (input) => {
+            let updateDeviceToRedis = (data) => {
 
-                let data = input.data
                 return new Promise((resolve, reject) => {
 
                     try {
 
-                        let typeText = "";
+                        
                         let arrayToUpdate = []
 
-                        typeText = (data.deviceType.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-
                         arrayToUpdate.push(
-                            ["hmset",deviceHashName, `${data.deviceId}.${typeText}`, 'n'],
+                            ["hmset",deviceHashName, `${data.deviceId}.${data.deviceType}`, 'n'],
                             ["hdel", deviceHashName,  data.socketId],
-                            ["hincrby", userHashName, `${data.userId.connectedDevice}`, -1]
-                            ["hget",deviceHashName, `${data.deviceId}.roomId`],
+                            ["hincrby", userHashName, `${data.userId}.connectedDevice`, -1],
+                            ["hget",deviceHashName, `${data.deviceId}.roomId`]
                         )
 
                         redis        
@@ -96,11 +94,11 @@ let updateDeviceAndUserRedis = (data) => {
 
                                 return reject(response.generate(true, 'Unable to update data to realtime database', 500, null))
 
-                            } else if (!check.isEmpty(result[0][3][0])) {
+                            } else if (!check.isEmpty(result[3][1])) {
 
                                 //returning roomId to disconnect device from socketRoom 
-                                data.room = result[0][3][0]
-                                return resolve(response.generate(true, 'Device details and User updated successfully to realtime database', 200, data))
+                                data.room = result[3][1]
+                                return resolve(data)
 
                             } else {
 
@@ -125,9 +123,7 @@ let updateDeviceAndUserRedis = (data) => {
             findDeviceFromRedis(data)
             .then(updateDeviceToRedis)
             .then((result) => {
-
                 resolve(result)    
-
             })
             .catch((err) => {
                 reject(err)
@@ -149,176 +145,3 @@ let updateDeviceAndUserRedis = (data) => {
 module.exports = {
     updateDeviceAndUserRedis : updateDeviceAndUserRedis
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// let deleteUserFromRedis = (input) => {
-
-//     return new Promise((resolve, reject) => {
-
-//         try {
-
-//             let data = input.data
-//             let arrayToDelete = []
-
-//             if (data.deleteDeviceFromRedis) {
-
-//                 arrayToDelete.push(
-//                     ["hdel", userHashName, `${data.userId}.homes`],
-//                     ["hdel", userHashName, `${data.userId}.homeLimit`],
-//                     ["hdel", userHashName, `${data.userId}.connectedHome`],
-//                     ["hdel", userHashName, `${data.userId}.connectedRoomLimit`],
-//                     ["hdel", userHashName, `${data.userId}.connectedRoom`],
-//                     ["hdel", userHashName, `${data.userId}.requestPerDayLimit`],
-//                     ["hdel", userHashName, `${data.userId}.requestPerDay`],
-//                     ["hdel", userHashName, `${data.userId}.connectedDeviceLimit`],
-//                     ["hdel", userHashName, `${data.userId}.connectedDevice`],
-//                     ["hdel", userHashName, `${data.userId}.userId`]
-                
-//                 )
-
-//                 redis
-//                     .pipeline(data.arrayToDelete)
-//                     .exec((err, result) => {
-
-//                         if (err) {
-
-//                             return reject(response.generate(true, 'Unable to delete user data from realtime database', 500, null))
-
-//                         } else if (result[0][1][0]) {
-
-//                             /*
-//                             TODO : Emit a event to update user data to mongodb
-//                             */
-//                             return resolve(response.generate(true, 'User details deleted successfully from realtime database', 200, data))
-
-//                         } else {
-
-//                             return reject(response.generate(true, 'Unable to delete user data from realtime database', 500, null))
-
-//                         }
-
-//                     })
-
-//             } else {
-
-//                 return resolve(response.generate(true, 'Nothing to delete, still some device are connected', 200, data))
-
-//             }
-
-//         } catch (err) {
-
-//             logger.error('Internal server Error', 'SocketIo : set-user : setUser : addUserAndDeviceToRedis', 10, err)
-//             let apiResponse = response.generate(true, 'Internal server error', 500, null)
-//             reject(apiResponse)
-
-//         }
-
-//     })
-
-// }
-// let deleteDeviceFromRedis = (input) => {
-
-//     return new Promise((resolve, reject) => {
-
-//         try {
-
-//             let data = input.data
-//             let arrayToDelete = []
-//             data.deleteUserFromRedis = false
-
-//             for (let index = 0; index < data.devices.length; index++) {
-
-//                 let device = data.devices[index];
-
-//                 let typeText = "", socketText = "";
-
-//                 typeText = (device.hasOwnProperty("software") ? "softwareConnected" : "harwardConnected")
-//                 socketText = (device.hasOwnProperty("software") ? "socketId1" : "socketId2")
-
-//                 arrayToDelete.push(
-//                     ["hdel", deviceHashName, `${device.deviceId}.homeId`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.roomId`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.userId`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.deviceId`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.state`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.voltage`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.extra`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.${typeText}`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.${socketText}`],
-//                     ["hdel", deviceHashName, `${device.deviceId}.${socketText}`],
-//                     ["hincrby", userHashName, `${data.userId.connectedDevice}`, -1]
-                
-//                 )
-
-//                 if (index === data.devices.length - 1) {
-
-//                     data.arrayToDelete = arrayToDelete
-
-//                     redis
-//                         .pipeline(
-//                             data.arrayToDelete
-//                         )
-//                         .exec((err, result) => {
-
-//                             if (err) {
-
-//                                 return reject(response.generate(true, 'Unable to delete data drom realtime database', 500, null))
-
-//                             } else if (!check.isEmpty(result[0][1][0])) {
-
-//                                 if (result[0][10][0] <= 0) data.deleteDeviceFromRedis = true
-
-//                                 return resolve(response.generate(true, 'Device details deleted successfully from realtime database', 200, data))
-
-//                             } else {
-
-//                                 return reject(response.generate(true, 'Unable to delete data drom realtime database', 500, null))
-
-//                             }
-//                         })
-//                 }
-//             }
-
-//         } catch (err) {
-
-//             logger.error('Internal server Error', 'SocketIo : set-user : setUser : addUserAndDeviceToRedis', 10, err)
-//             let apiResponse = response.generate(true, 'Internal server error', 500, null)
-//             reject(apiResponse)
-//         }
-//     })
-// }

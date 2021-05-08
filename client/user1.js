@@ -1,7 +1,7 @@
 // connecting with sockets.
 const socket = io('http://localhost:3000');
 
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6IlcwMWVNb3MxTSIsImlhdCI6MTYxOTk1MDY5NjU4OSwiZXhwIjoxNjIwMjUzMDk2LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiekRvU3NMZU5RIiwiZmlyc3ROYW1lIjoiQXNoaXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoiYXZpODg5NDczNTVAZ21haWwuY29tIiwibW9iaWxlTnVtYmVyIjo5ODc2NTQzMjExLCJjb3VudHJ5IjoiSU4ifX0.eutnWbi500IHMI3Rd6ztfHoqay8YIF_SwptWHXI7aqc"
+const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6ImV6T3NwcFpyUCIsImlhdCI6MTYyMDQ3OTI0NTI1MSwiZXhwIjoxNjIwNzgxNjQ1LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiekRvU3NMZU5RIiwiZmlyc3ROYW1lIjoiQXNoaXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoiYXZpODg5NDczNTVAZ21haWwuY29tIiwibW9iaWxlTnVtYmVyIjo5ODc2NTQzMjExLCJjb3VudHJ5IjoiSU4ifX0.DqPO6NfehwnZJTZs3e9Q-qYiZ4yW20aryNFoKBfm69w"
 const homeId = 'a-coIva72';
 const roomId = 'XV2u03Fl1';
 const devices = [
@@ -22,13 +22,12 @@ const updateEventName = 'update-device-state-' + homeId
 const changeEventName = 'change-state-' + homeId
 
 let deviceData = {
-  authToken: authToken,
-  data: {
+    authToken: authToken,
     homeId: homeId,
     roomId: roomId,
     devices: devices,
     type: 's'
-  }
+  
 }
 
 let chatSocket = () => {
