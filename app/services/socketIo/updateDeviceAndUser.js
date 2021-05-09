@@ -42,11 +42,7 @@ let updateDeviceAndUserRedis = (data) => {
 
                             } else if (!check.isEmpty(result)) {
 
-                                
-                                let mData = result.split('|')
-                                data.deviceId = mData[0]
-                                data.deviceType = mData[1]
-                                data.userId = mData[2]
+                                data.info = JSON.parse(result)
                                 return resolve(data)
 
                             } else {
@@ -54,8 +50,8 @@ let updateDeviceAndUserRedis = (data) => {
                                 return reject(response.generate(true, 'Unable to find data from realtime database', 500, null))
 
                             }
-                        })  
-   
+                        })
+
                     } catch (err) {
 
                         logger.error('Internal server Error', 'SocketIo : disconnect : updateDeviceAndUserRedis : findDeviceFromRedis()', 10, err)
@@ -74,39 +70,48 @@ let updateDeviceAndUserRedis = (data) => {
 
                     try {
 
-                        
+
                         let arrayToUpdate = []
 
-                        arrayToUpdate.push(
-                            ["hmset",deviceHashName, `${data.deviceId}.${data.deviceType}`, 'n'],
-                            ["hdel", deviceHashName,  data.socketId],
-                            ["hincrby", userHashName, `${data.userId}.connectedDevice`, -1],
-                            ["hget",deviceHashName, `${data.deviceId}.roomId`]
-                        )
+                        data.info.forEach((element, index) => {
 
-                        redis        
-                        .pipeline(
-                                arrayToUpdate
+                            arrayToUpdate.push(
+                                ["hincrby", deviceHashName, `${element.deviceId}.${element.deviceType}`, -1],
+                                ["hdel", deviceHashName, data.socketId],
+                                ["hincrby", userHashName, `${element.userId}.connectedDevice`, -1],
+                                ["hget", deviceHashName, `${element.deviceId}.roomId`],
+                                ["hdel", deviceHashName, `${element.deviceId}.socketId`]
                             )
-                            .exec((err, result) => {
 
-                            if (err) {
+                            if (index == data.info.length - 1) {
 
-                                return reject(response.generate(true, 'Unable to update data to realtime database', 500, null))
+                                redis
+                                    .pipeline(arrayToUpdate)
+                                    .exec((err, result) => {
 
-                            } else if (!check.isEmpty(result[3][1])) {
+                                        if (err) {
 
-                                //returning roomId to disconnect device from socketRoom 
-                                data.room = result[3][1]
-                                return resolve(data)
+                                            return reject(response.generate(true, 'Unable to update data to realtime database', 500, null))
 
-                            } else {
+                                        } else if (!check.isEmpty(result[3][1])) {
 
-                                return reject(response.generate(true, 'Unable to update data to realtime database', 500, null))
+                                            console.log("Device Disconnected for :"+ data.socketId)
+                                            //returning roomId to disconnect device from socketRoom 
+                                            data.roomId = result[3][1]
+                                            return resolve(data)
+
+                                        } else {
+
+                                            return reject(response.generate(true, 'Unable to update data to realtime database', 500, null))
+
+                                        }
+                                    })
 
                             }
-                        })
-                        
+
+                        });
+
+
                     } catch (err) {
 
                         logger.error('Internal server Error', 'SocketIo : disconnect : updateDeviceAndUserRedis : findDeviceFromRedis()', 10, err)
@@ -121,13 +126,13 @@ let updateDeviceAndUserRedis = (data) => {
 
 
             findDeviceFromRedis(data)
-            .then(updateDeviceToRedis)
-            .then((result) => {
-                resolve(result)    
-            })
-            .catch((err) => {
-                reject(err)
-            })
+                .then(updateDeviceToRedis)
+                .then((result) => {
+                    resolve(result)
+                })
+                .catch((err) => {
+                    reject(err)
+                })
 
         } catch (error) {
 
@@ -143,5 +148,5 @@ let updateDeviceAndUserRedis = (data) => {
 
 
 module.exports = {
-    updateDeviceAndUserRedis : updateDeviceAndUserRedis
+    updateDeviceAndUserRedis: updateDeviceAndUserRedis
 }

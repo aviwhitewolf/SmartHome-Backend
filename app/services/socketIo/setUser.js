@@ -41,39 +41,6 @@ let setUsers = (data) => {
 
             // TODO : check for validation, homeId, authToken
 
-            let verifyToken = (data) => {
-
-                return new Promise((resolve, reject) => {
-
-                    try {
-
-                        tokenLib.verifyClaimWithoutSecret(data.authToken, (err, user) => {
-
-                            if (err) {
-
-                                logger.error('Internal server Error - while verifying token or token expired', 'SocketIo : set-user : setUser : verifyToken', 7, err)
-                                let apiResponse = response.generate(true, 'Token expired', 400, null)
-                                reject(apiResponse)
-
-                            } else {
-                                data.userId = user.data.userId
-                                resolve(data)
-
-                            }
-                        })
-
-                    } catch (err) {
-
-                        logger.error('Internal server Error', 'SocketIo : set-user : setUser : verifyToken', 10, err)
-                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
-                        reject(apiResponse)
-
-                    }
-
-                })
-
-            }
-
             let checkUserFromRedisAndValidate = (data) => {
 
                 data.userVerifiedFromRedis = false
@@ -104,6 +71,11 @@ let setUsers = (data) => {
                             .hmget(userHashName, `${data.userId}.connectedDevice`)
                             .hmget(userHashName, `${data.userId}.userId`)
                             .exec((err, result) => {
+
+
+                                if(err){
+                                    reject(response.generate(true, 'Some error occured while fetching user data from realtime database', 500, null))
+                                }
 
                                 // "homes",                result[0][1][0]
                                 // "homeLimit",            result[1][1][0]
@@ -149,14 +121,14 @@ let setUsers = (data) => {
                                     /*
                                     If connected Device limit is reached
                                     */
-                                    if(data.userHash.connectedDevice >= data.userHash.connectedDeviceLimit)
+                                    if (data.userHash.connectedDevice >= data.userHash.connectedDeviceLimit)
                                         return reject(response.generate(true, 'Can not add more device,try disconnecting some device from mobile app, website', 400, null))
-    
+
                                     /*
                                     ? If New Home, check homeLimit
                                     * Add New Home and Room, update home count and room count
                                     */
-                                    if (data.userHash.homes[data.data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.homeLimit) {
+                                    if (data.userHash.homes[data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.homeLimit) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
@@ -181,7 +153,7 @@ let setUsers = (data) => {
                                         ? Old Home and new room
                                         * Add new room to old home and update room count
                                         */
-                                    } else if (data.userHash.homes[data.data.homeId][data.data.roomId] == undefined 
+                                    } else if (data.userHash.homes[data.homeId][data.roomId] == undefined
                                         && (data.userHash.connectedRoom) < data.userHash.connectedRoomLimit) {
 
                                         data.userVerifiedFromRedis = true
@@ -189,19 +161,19 @@ let setUsers = (data) => {
 
                                         let homes = data.userHash.homes
 
-                                        homes[data.data.homeId][data.data.roomId] = data.userHash.connectedRoom + 1
+                                        homes[data.homeId][data.roomId] = data.userHash.connectedRoom + 1
 
                                         data.userHash.homes = JSON.stringify(homes)
                                         data.userHash.connectedRoom = data.userHash.connectedRoom + 1
 
                                         // resolve(response.generate(false, 'Room added to redis', 200, data))
-                                            
+
                                         resolve(data)
                                         /*
                                         ? If home and room both are present
                                         */
-                                    } else if (data.userHash.homes[data.data.homeId] != undefined 
-                                        && data.userHash.homes[data.data.homeId][data.data.roomId] != undefined) {
+                                    } else if (data.userHash.homes[data.homeId] != undefined
+                                        && data.userHash.homes[data.homeId][data.roomId] != undefined) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
@@ -242,7 +214,7 @@ let setUsers = (data) => {
 
                 return new Promise((resolve, reject) => {
 
-                    try {        
+                    try {
 
                         DailyUserPlanModel.aggregate(
                             [
@@ -313,8 +285,8 @@ let setUsers = (data) => {
                                         }
                                         data.devices = result.devices
 
-                                        if ((data.userHash == undefined || data.userHash == null || data.userHash == "") 
-                                        && !data.userVerifiedFromRedis)
+                                        if ((data.userHash == undefined || data.userHash == null || data.userHash == "")
+                                            && !data.userVerifiedFromRedis)
                                             data.userHash = {
                                                 "homes": JSON.stringify(homes),
                                                 "homeLimit": result.homeLimit,
@@ -362,13 +334,13 @@ let setUsers = (data) => {
 
 
                             let deviceCountCheck = data.userHash.connectedDevice;
-                            let arrayToInsert = []
+                            let arrayToInsert = [], socketInfo = []
 
                             /*
                             * Get devices data from redis, from hash - ConnectedDevices
                             ? homeId, roomId, userId, deviceId, state, voltage, extra
                             ! If Not then add the device to redis database
-                            * If yes then just update softwareConnected or hardwareConneted = 'y' 
+                            * If yes then just increment softwareConnected or hardwareConneted by 1
                             * and set socketIdS or socketIdH
                             */
 
@@ -377,55 +349,71 @@ let setUsers = (data) => {
 
                                 if (deviceCountCheck <= data.userHash.connectedDeviceLimit) {
 
-                                    redis
-                                        .hmget(deviceHashName, `${device.deviceId}.deviceId`,
-                                            (err, deviceResult) => {
+                                    redis.pipeline([
+                                        ["hmget", deviceHashName, `${device.deviceId}.deviceId`],
+                                        ["hmget", deviceHashName, `${device.deviceId}.softwareConnected`],
+                                        ["hmget", deviceHashName, `${device.deviceId}.harwardConnected`]
+                                    ]
+                                    ).exec((err, result) => {
 
 
-                                                let typeText = "", typeDevice = '';
+                                        let typeText = "";
 
-                                                typeText = (data['type'] == 's' ? "softwareConnected" : "harwardConnected")
-                                                typeDevice = (data['type'] == 's' ? "softwareConnected" : "harwardConnected")
+                                        typeText = (data['type'] == 's' ? "softwareConnected" : "harwardConnected")
+
+                                        if (!check.isEmpty(result[2][1][0]) && result[2][1][0] < 0)
+                                            arrayToInsert.push(
+                                                ["hmset", deviceHashName, `${device.deviceId}.softwareConnected`, 0],
+                                            )
+
+                                        if (!check.isEmpty(result[2][1][0]) && result[2][1][0] < 0)
+                                            arrayToInsert.push(
+                                                ["hmset", deviceHashName, `${device.deviceId}.hardwareConnected`, 0],
+                                            )
 
 
-                                                if (!check.isEmpty(deviceResult[0])) {
+                                        socketInfo.push({
+                                            'deviceId': device.deviceId,
+                                            'deviceType': typeText,
+                                            'userId': device.userId
+                                        })
 
-                                                    arrayToInsert.push(
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
-                                                    )
 
-                                                    if (index === data.devices.length - 1) {
-                                                        data.arrayToInsert = arrayToInsert
-                                                        data.userHash.connectedDevice = deviceCountCheck
-                                                        //  return resolve(response.generate(false, 'Device Added', 200, data))
-                                                        return resolve(data)
-                                                    }
+                                        if (!check.isEmpty(result[0][1][0])) {
 
-                                                } else {
+                                            arrayToInsert.push(
+                                                ["hincrby", deviceHashName, `${device.deviceId}.${typeText}`, 1],
+                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId],
+                                                // ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeText}|${device.userId}`]
+                                            )
 
-                                                    arrayToInsert.push(
-                                                        ["hmset",deviceHashName, `${device.deviceId}.homeId`, device.homeId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.roomId`, device.roomId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.userId`, device.userId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.deviceId`, device.deviceId],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.state`, device.state],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.voltage`, device.voltage],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.extra`, device.extra],
-                                                        ["hmset",deviceHashName, `${device.deviceId}.${typeText}`, 'y'],
-                                                        ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeDevice}|${device.userId}`]
-                                                        )
 
-                                                    if (index === data.devices.length - 1) {
-                                                        data.arrayToInsert = arrayToInsert
-                                                        data.userHash.connectedDevice = deviceCountCheck
-                                                    //    return resolve(response.generate(false, 'Device Added', 200, data))
-                                                          return resolve(data)
-                                                    }
+                                        } else {
 
-                                                }
+                                            arrayToInsert.push(
+                                                ["hmset", deviceHashName, `${device.deviceId}.homeId`, device.homeId],
+                                                ["hmset", deviceHashName, `${device.deviceId}.roomId`, device.roomId],
+                                                ["hmset", deviceHashName, `${device.deviceId}.userId`, device.userId],
+                                                ["hmset", deviceHashName, `${device.deviceId}.deviceId`, device.deviceId],
+                                                ["hmset", deviceHashName, `${device.deviceId}.state`, device.state],
+                                                ["hmset", deviceHashName, `${device.deviceId}.voltage`, device.voltage],
+                                                ["hmset", deviceHashName, `${device.deviceId}.extra`, device.extra],
+                                                ["hincrby", deviceHashName, `${device.deviceId}.${typeText}`, 1],
+                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId],
+                                                // ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeText}|${device.userId}`]
+                                            )
 
-                                            });
+                                        }
+
+
+                                        if (index === data.devices.length - 1) {
+                                            arrayToInsert.push(["hmset", deviceHashName, `${data.socketId}`, JSON.stringify(socketInfo)])
+                                            data.arrayToInsert = arrayToInsert
+                                            data.userHash.connectedDevice = deviceCountCheck
+                                            return resolve(data)
+                                        }
+
+                                    });
 
                                 } else {
 
@@ -467,19 +455,19 @@ let setUsers = (data) => {
 
                     try {
 
-                        
+
                         data.arrayToInsert.push(
 
-                            ["hmset",userHashName, `${data.userId}.homes`, data.userHash.homes],
-                            ["hmset",userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit],
-                            ["hmset",userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome],
-                            ["hmset",userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit],
-                            ["hmset",userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom],
-                            ["hmset",userHashName, `${data.userId}.requestPerDayLimit`, data.userHash.requestPerDayLimit],
-                            ["hmset",userHashName, `${data.userId}.requestPerDay`, data.userHash.requestPerDay],
-                            ["hmset",userHashName, `${data.userId}.connectedDeviceLimit`, data.userHash.connectedDeviceLimit],
-                            ["hmset",userHashName, `${data.userId}.connectedDevice`, data.userHash.connectedDevice],
-                            ["hmset",userHashName, `${data.userId}.userId`, data.userHash.userId]
+                            ["hmset", userHashName, `${data.userId}.homes`, data.userHash.homes],
+                            ["hmset", userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit],
+                            ["hmset", userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome],
+                            ["hmset", userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit],
+                            ["hmset", userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom],
+                            ["hmset", userHashName, `${data.userId}.requestPerDayLimit`, data.userHash.requestPerDayLimit],
+                            ["hmset", userHashName, `${data.userId}.requestPerDay`, data.userHash.requestPerDay],
+                            ["hmset", userHashName, `${data.userId}.connectedDeviceLimit`, data.userHash.connectedDeviceLimit],
+                            ["hmset", userHashName, `${data.userId}.connectedDevice`, data.userHash.connectedDevice],
+                            ["hmset", userHashName, `${data.userId}.userId`, data.userHash.userId]
                         )
 
                         redis
@@ -511,22 +499,99 @@ let setUsers = (data) => {
 
             }
 
-            verifyToken(data)
-                .then(checkUserFromRedisAndValidate)
+            let deleteAllRedisEnteries = (data) => {
+
+                return new Promise((resolve, reject) => {
+
+                    try {
+
+
+                        let arrayToDelete = []
+
+                        if ((data.userHash == undefined || data.userHash == null || data.userHash == "")
+                            && !data.userVerifiedFromRedis) {
+
+                            arrayToDelete.push(
+                                ["hdel", element.hashName, `${element.key}.homes`],
+                                ["hdel", element.hashName, `${element.key}.homeLimit`],
+                                ["hdel", element.hashName, `${element.key}.connectedHome`],
+                                ["hdel", element.hashName, `${element.key}.connectedRoomLimit`],
+                                ["hdel", element.hashName, `${element.key}.connectedRoom`],
+                                ["hdel", element.hashName, `${element.key}.requestPerDayLimit`],
+                                ["hdel", element.hashName, `${element.key}.requestPerDay`],
+                                ["hdel", element.hashName, `${element.key}.connectedDeviceLimit`],
+                                ["hdel", element.hashName, `${element.key}.connectedDevice`],
+                                ["hdel", element.hashName, `${element.key}.userId`]
+                            )
+
+
+                            data.devices.forEach((element, index) => {
+
+                                arrayToDelete.push(
+                                    ["hdel", element.hashName, `${element.key}.homeId`],
+                                    ["hdel", element.hashName, `${element.key}.roomId`],
+                                    ["hdel", element.hashName, `${element.key}.userId`],
+                                    ["hdel", element.hashName, `${element.key}.deviceId`],
+                                    ["hdel", element.hashName, `${element.key}.state`],
+                                    ["hdel", element.hashName, `${element.key}.voltage`],
+                                    ["hdel", element.hashName, `${element.key}.extra`],
+                                    ["hdel", element.hashName, `${element.key}.harwardConnected`],
+                                    ["hdel", element.hashName, `${element.key}.softwareConnected`]
+                                )
+
+                                if (index == data.devices.length - 1) {
+
+                                    redis.pipeline(
+                                        arrayToDelete
+                                    ).exec((err, result) => {
+
+                                        if (err) {
+
+                                            logger.error('Unable to delete', 'Redis Controller :  deleteRedisEnteries', 10, err)
+                                            reject(response.generate(true, 'Internal server error', 500, null))
+
+                                        } else {
+
+                                            resolve(response.generate(false, 'Data deleted Successfully', 200, data))
+
+                                        }
+                                    })
+
+                                }
+
+                            });
+                        } else {
+                            resolve(response.generate(false, 'Nothing to delete', 200, data))
+                        }
+
+                    } catch (err) {
+
+                        logger.error('Internal server Error',
+                            'Redis Controller : deleteRedisEnteriesFunction : deleteRedisEnteries', 10, err)
+                        let apiResponse = response.generate(true, 'Internal server error', 500, null)
+                        reject(apiResponse)
+
+                    }
+
+                })
+
+            }
+
+            checkUserFromRedisAndValidate(data)
                 .then((result) => {
 
                     // if (result.status == 200 && result.data.forward) {
-                        /*
-                         TODO : Add device to SocketIO room
-                        */
-                        checkIntoMongoDb(result)
-                            .then(addDeviceToArray)
-                            .then(updateUserToRedis)
-                            .then((result) => {
-                                resolve(response.generate(false, 'User and device added realtime database', 500, null))
-                            }).catch((err) => {
-                                reject(err)
-                            })
+                    /*
+                     TODO : Add device to SocketIO room
+                    */
+                    checkIntoMongoDb(result)
+                        .then(addDeviceToArray)
+                        .then(updateUserToRedis)
+                        .then((result) => {
+                            resolve(result)
+                        }).catch((err) => {
+                            reject(err)
+                        })
 
                     // } else{
 
@@ -550,37 +615,6 @@ let setUsers = (data) => {
 
 }
 
-// // saving chats to database.
-// eventEmitter.on('save-device-state', (data) => {
-
-//     //findDevice and update
-//     deviceModel.findOne({ deviceId: data.deviceId, homeId: data.homeId, userId: data.userId }, (err, result) => {
-
-//         if (err) {
-//             console.log('Failed to find the device')
-
-//         } else if (check.isEmpty(result)) {
-//             console.log('No device found');
-
-//         } else {
-
-//             result.lastModified = time.now()
-//             result.state = data.state
-//             result.extra = (!check.isEmpty(data.extra) ? data.extra : result.extra)
-
-//             result.save(function (err, result) {
-//                 if (err) {
-//                     console.log('Failed to edit the device state');
-//                 } else {
-//                     console.log('Device state updated successfully');
-//                 }
-//             })
-
-//         }
-
-//     })
-
-// }); // end of saving chat.
 
 
 

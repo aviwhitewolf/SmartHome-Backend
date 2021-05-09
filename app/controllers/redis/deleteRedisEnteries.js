@@ -81,7 +81,8 @@ let deleteRedisEnteriesFunction = (req, res) => {
                             ["hdel", element.hashName, `${element.key}.voltage`],
                             ["hdel", element.hashName, `${element.key}.extra`],
                             ["hdel", element.hashName, `${element.key}.harwardConnected`],
-                            ["hdel", element.hashName, `${element.key}.softwareConnected`]
+                            ["hdel", element.hashName, `${element.key}.softwareConnected`],
+                            ["hdel", element.hashName, `${element.key}.socketId`]
                         )
                         }
                     if (index == inputArray.length - 1) {

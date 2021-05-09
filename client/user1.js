@@ -34,7 +34,7 @@ let chatSocket = () => {
 
   socket.on('verifyUser', (data) => {
 
-    console.log("socket trying to verify user", data);
+    console.log(data);
 
     let userData = {};
     userData.authToken = authToken;
@@ -43,11 +43,11 @@ let chatSocket = () => {
   });
 
 
-  socket.on(updateEventName, (data) => {
-    console.log("Updating device state");
-    console.log(data)
-  });
 
+  socket.on('incoming-device-state-change', (data) => {
+    console.log("Incoming Data")
+    console.log(data)
+  })
 
   socket.on('connection-error', (data) => {
 
@@ -68,46 +68,19 @@ let chatSocket = () => {
     console.log(data)
   })
 
-
-  // socket.on(userId, (data) => {
-
-  //   console.log("you received a message from "+data.senderName)
-  //   console.log(data.message)
-
-  // });
-
-  // //to join room, we are subcribed to oline-user-list
-  // socket.on("online-user-list", (data) => {
-
-  //   console.log("Online user list is updated. some user can online or went offline")
-  //   console.log(data)
-
-  // });
-
-  // socket.on("typing", (data) => {
-
-  //   console.log(data+" is typing")
-
-
-  // });
-
   $("#send").on('click', function () {
 
     var messageText = $("#messageToSend").val()
-    console.log(messageText);
-    deviceData.state = parseInt(messageText);
-    socket.emit('change-state', deviceData)
+    let device = [  {
+      deviceId: 'p13j55UIa',
+      state: parseInt(messageText),
+      voltage: 150,
+      extra: ''
+    }]
+    deviceData.devices = device 
+    socket.emit('device-state-change', deviceData)
 
   })
-
-  // $("#messageToSend").on('keypress', function () {
-
-  //   socket.emit("typing","Mr Xyz")
-
-  // })
-
-
-
 
 }// end chat socket function
 

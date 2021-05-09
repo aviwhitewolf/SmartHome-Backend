@@ -1,9 +1,14 @@
 const socketio = require('socket.io');
 const check = require("./checkLib.js");
 const response = require('./../libs/responseLib');
+const tokenLib = require("./../libs/tokenLib.js");
+const logger = require('./../libs/loggerLib.js');
 
 const setUserService = require("./../services/socketIo/setUser");
 const updateDeviceAndUserRedis = require("../services/socketIo/updateDeviceAndUser");
+
+// if 2 software are connected and one of then gets disconnected then you are updating softwareConnected as 'n'
+//which is wrong
 
 
 let setServer = (server) => {
@@ -18,17 +23,18 @@ let setServer = (server) => {
 
         console.log("Socket Connected ==> emitting 'verify user'");
 
-        socket.emit("verifyUser", 'Test');
+        socket.emit("verifyUser", 'Requesting to Verify user...');
 
         socket.on('set-user', (data) => {
 
             try {
 
                 data.socketId = socket.id
-                setUserService.setUser(data)
+                isUserAuthorised(data)
+                    .then(setUserService.setUser)
                     .then((result) => {
-
-                        socket.join(result.room)
+                        console.log("join room :" + result.roomId)
+                        socket.join(result.roomId)
                         socket.emit('set-user-success', response.generate(false, 'Device and user added to realtime database', 200, null))
 
                     }).catch((err) => {
@@ -50,29 +56,26 @@ let setServer = (server) => {
 
         })
 
-
         socket.on('disconnect', () => {
             try {
 
-
-                console.log("Device Disconnected")
                 let data = {}
-                    
-                    data.socketId = socket.id
-                    updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
-                        .then((result) => {
 
-                            socket.leave(result.room)
-                            socket.emit('disconnect-device-success', response.generate(true, 'Device disconnected from realtime database', 200, null))
+                data.socketId = socket.id
+                updateDeviceAndUserRedis.updateDeviceAndUserRedis(data)
+                    .then((result) => {
+                        console.log("leave room : " + result.roomId)
+                        socket.leave(result.roomId)
+                        socket.emit('disconnect-device-success', response.generate(true, 'Device disconnected from realtime database', 200, null))
 
-                        })
-                        .catch((err) => {
+                    })
+                    .catch((err) => {
 
-                            socket.emit('set-user-error', err)
-                            socket.close();
+                        socket.emit('set-user-error', err)
+                        if (socket.connected) socket.disconnect()
 
-                        })
-                
+                    })
+
 
             } catch (err) {
                 console.log("Error", err)
@@ -83,49 +86,58 @@ let setServer = (server) => {
 
         })
 
-
         socket.on('device-state-change', (data) => {
 
-            if (socket.hasOwnProperty("userId") && !check.isEmpty(socket.userId)) {
+            try {
 
-                if (check.isEmpty(data.deviceId)) {
-                    // socket.emit('error', { status: 500, error: 'Please provide correct deviceId'})  
+                
+                socket.to(data.roomId).emit('incoming-device-state-change',data);
 
-                } else if (check.isEmpty(data.homeId)) {
-                    // socket.emit('error', { status: 500, error: 'Please provide correct state of a device'})  
+            } catch (err) {
+                console.log("Error", err)
+                if (socket.connected) {
+                    socket.emit('set-user-error', response.generate(true, 'Internal server error', 500, null))
+                }
+            }
 
-                } else if (check.isEmpty(data.state)) {
-                    // socket.emit('error', { status: 500, error: 'Please provide correct state of a device'})  
+        })
 
-                } else {
+        socket.on('incoming-device-state-change', (data) => {
+            console.log(data)
+        })
 
-                    let _data = {};
-                    _data['homeId'] = data.homeId;
-                    _data['userId'] = socket.userId;
-                    _data.state = data.state
-                    _data.deviceId = data.deviceId
-                    console.log(_data)
-                    //emiting device state
-                    // socket.emit('update-device-state-'+data.homeId, _data)
+        let isUserAuthorised = (data) => {
 
-                    let _eventName = 'update-device-state-' + data.homeId
-                    console.log(_eventName);
-                    myIo.emit(_eventName, _data)
+            return new Promise((resolve, reject) => {
 
-                    // event to save chat.
-                    setTimeout(function () {
-                        eventEmitter.emit('save-device-state', _data);
+                try {
 
-                    }, 1000)
+                    tokenLib.verifyClaimWithoutSecret(data.authToken, (err, user) => {
+
+                        if (err) {
+
+                            logger.error('Internal server Error - while verifying token or token expired', 'SocketLib : isUserAuthorised()', 7, err)
+                            let apiResponse = response.generate(true, 'Token expired', 400, null)
+                            reject(apiResponse)
+
+                        } else {
+                            data.userId = user.data.userId
+                            resolve(data)
+
+                        }
+                    })
+
+                } catch (err) {
+
+                    logger.error('Internal server Error', 'SocketLib : isUserAuthorised', 10, err)
+                    let apiResponse = response.generate(true, 'Internal server error', 500, null)
+                    reject(apiResponse)
 
                 }
 
-            } else {
-                console.log('Token not set')
-            }
+            })
 
-        }) // end of listening set-user event
-
+        }
 
     });
 }
