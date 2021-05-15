@@ -11,17 +11,29 @@ const DailyUserPlan = new Schema({
     unique  : true
   },
 
-  homeLimit : {
+  connectedHomeLimit : {
     type : Number,
     default : 0
   },
 
-  deviceLimit : {
+
+  connectedHome : {
     type : Number,
     default : 0
   },
 
-  roomLimit : {
+  connectedDeviceLimit : {
+    type : Number,
+    default : 0
+  },
+
+  connectedRoomLimit : {
+    type : Number,
+    default : 0
+  },
+
+
+  connectedRoom : {
     type : Number,
     default : 0
   },
@@ -32,11 +44,6 @@ const DailyUserPlan = new Schema({
   },
 
   connectedDeviceLimit : {
-    type : Number,
-    default : 0
-  },
-
-  roomName : {
     type : Number,
     default : 0
   },

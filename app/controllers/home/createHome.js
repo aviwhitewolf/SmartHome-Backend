@@ -34,8 +34,8 @@ let createHomeFunction = (req, res) => {
 
                 } else {
 
-                    if(result.homeLimit  - 1 >= 0){
-                        req.homeLimit = result.homeLimit 
+                    if(result.connectedHomeLimit  - 1 >= 0){
+                        req.connectedHomeLimit = result.connectedHomeLimit 
                         resolve()
 
                     }else{
@@ -124,7 +124,7 @@ let createHomeFunction = (req, res) => {
    
                 let updateDailyUserPlan = {           
                     
-                    homeLimit     : req.homeLimit - 1,
+                    connectedHomeLimit     : req.connectedHomeLimit - 1,
                     lastModified  : time.now()
                 
                 }

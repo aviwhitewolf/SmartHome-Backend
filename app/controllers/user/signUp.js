@@ -146,9 +146,9 @@ let signUpFunction = (req, res) => {
                             let newDailyUserPlan = new DailyUserPlanModel({
 
                                 userId: req.userId,
-                                homeLimit: plan.homeLimit,
-                                deviceLimit: plan.deviceLimit,
-                                roomLimit: plan.roomLimit,
+                                connectedHomeLimit: plan.connectedHomeLimit,
+                                connectedDeviceLimit: plan.connectedDeviceLimit,
+                                connectedRoomLimit: plan.connectedRoomLimit,
                                 requestPerDayLimit: plan.requestPerDayLimit,
                                 lastModified: time.now(),
                                 createdOn: time.now()

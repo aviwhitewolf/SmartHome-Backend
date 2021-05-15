@@ -52,7 +52,7 @@ let setUsers = (data) => {
 
                         /*
                         * Get User data from redis,from hash - ConnectedUser
-                        ? homes, homeLimit, connectedhome, roomLimit, connectedRoom, requestPerDayLimit,
+                        ? homes, connectedHomeLimit, connectedhome, connectedRoomLimit, connectedRoom, requestPerDayLimit,
                         ? requestPerDay, connectedDeviceLimitLimit, connectedDevice, userId
                         ! If Not then follow the different process and add user to redis
                         * If yes then check for devices data from redis, from hash - ConnectedDevices 
@@ -61,7 +61,7 @@ let setUsers = (data) => {
                         redis
                             .pipeline()
                             .hmget(userHashName, `${data.userId}.homes`)
-                            .hmget(userHashName, `${data.userId}.homeLimit`)
+                            .hmget(userHashName, `${data.userId}.connectedHomeLimit`)
                             .hmget(userHashName, `${data.userId}.connectedHome`)
                             .hmget(userHashName, `${data.userId}.connectedRoomLimit`)
                             .hmget(userHashName, `${data.userId}.connectedRoom`)
@@ -78,9 +78,9 @@ let setUsers = (data) => {
                                 }
 
                                 // "homes",                result[0][1][0]
-                                // "homeLimit",            result[1][1][0]
+                                // "connectedHomeLimit",            result[1][1][0]
                                 // "connectedHome",        result[2][1][0]
-                                // "roomLimit",            result[3][1][0]
+                                // "connectedRoomLimit",            result[3][1][0]
                                 // "connectedRoom",        result[4][1][0]
                                 // "requestPerDayLimit",   result[5][1][0]
                                 // "requestPerDay",        result[6][1][0]
@@ -101,7 +101,7 @@ let setUsers = (data) => {
 
                                     data.userHash = {
                                         "homes": JSON.parse(result[0][1][0]),
-                                        "homeLimit": Number(result[1][1][0]),
+                                        "connectedHomeLimit": Number(result[1][1][0]),
                                         "connectedHome": Number(result[2][1][0]),
                                         "connectedRoomLimit": Number(result[3][1][0]),
                                         "connectedRoom": Number(result[4][1][0]),
@@ -125,10 +125,10 @@ let setUsers = (data) => {
                                         return reject(response.generate(true, 'Can not add more device,try disconnecting some device from mobile app, website', 400, null))
 
                                     /*
-                                    ? If New Home, check homeLimit
+                                    ? If New Home, check connectedHomeLimit
                                     * Add New Home and Room, update home count and room count
                                     */
-                                    if (data.userHash.homes[data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.homeLimit) {
+                                    if (data.userHash.homes[data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.connectedHomeLimit) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
@@ -280,7 +280,7 @@ let setUsers = (data) => {
 
                                         let homes = {
                                             [data.homeId]: {
-                                                [data.roomId]: result.roomLimit + 1
+                                                [data.roomId]: result.connectedRoomLimit + 1
                                             }
                                         }
                                         data.devices = result.devices
@@ -289,9 +289,9 @@ let setUsers = (data) => {
                                             && !data.userVerifiedFromRedis)
                                             data.userHash = {
                                                 "homes": JSON.stringify(homes),
-                                                "homeLimit": result.homeLimit,
+                                                "connectedHomeLimit": result.connectedHomeLimit,
                                                 "connectedHome": 1,
-                                                "connectedRoomLimit": result.roomLimit,
+                                                "connectedRoomLimit": result.connectedRoomLimit,
                                                 "connectedRoom": 1,
                                                 "requestPerDayLimit": result.requestPerDayLimit,
                                                 "requestPerDay": 0,
@@ -383,8 +383,7 @@ let setUsers = (data) => {
 
                                             arrayToInsert.push(
                                                 ["hincrby", deviceHashName, `${device.deviceId}.${typeText}`, 1],
-                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId],
-                                                // ["hmset",deviceHashName,  data.socketId, `${device.deviceId}|${typeText}|${device.userId}`]
+                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId]
                                             )
 
 
@@ -399,8 +398,7 @@ let setUsers = (data) => {
                                                 ["hmset", deviceHashName, `${device.deviceId}.voltage`, device.voltage],
                                                 ["hmset", deviceHashName, `${device.deviceId}.extra`, device.extra],
                                                 ["hincrby", deviceHashName, `${device.deviceId}.${typeText}`, 1],
-                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId],
-                                                // ["hmset",deviceHashName, data.socketId, `${device.deviceId}|${typeText}|${device.userId}`]
+                                                ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId]
                                             )
 
                                         }
@@ -459,7 +457,7 @@ let setUsers = (data) => {
                         data.arrayToInsert.push(
 
                             ["hmset", userHashName, `${data.userId}.homes`, data.userHash.homes],
-                            ["hmset", userHashName, `${data.userId}.homeLimit`, data.userHash.homeLimit],
+                            ["hmset", userHashName, `${data.userId}.connectedHomeLimit`, data.userHash.connectedHomeLimit],
                             ["hmset", userHashName, `${data.userId}.connectedHome`, data.userHash.connectedHome],
                             ["hmset", userHashName, `${data.userId}.connectedRoomLimit`, data.userHash.connectedRoomLimit],
                             ["hmset", userHashName, `${data.userId}.connectedRoom`, data.userHash.connectedRoom],
@@ -513,7 +511,7 @@ let setUsers = (data) => {
 
                             arrayToDelete.push(
                                 ["hdel", element.hashName, `${element.key}.homes`],
-                                ["hdel", element.hashName, `${element.key}.homeLimit`],
+                                ["hdel", element.hashName, `${element.key}.connectedHomeLimit`],
                                 ["hdel", element.hashName, `${element.key}.connectedHome`],
                                 ["hdel", element.hashName, `${element.key}.connectedRoomLimit`],
                                 ["hdel", element.hashName, `${element.key}.connectedRoom`],

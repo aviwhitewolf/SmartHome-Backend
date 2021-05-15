@@ -47,7 +47,7 @@ let getAllRedisEnteriesFunction = (req, res) => {
 
     let getAllRedisEnteries = () => {
 
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
 
             try {
 
@@ -55,7 +55,7 @@ let getAllRedisEnteriesFunction = (req, res) => {
                 let arrayToDisplay = []
                 let inputArray = req.body
 
-                await inputArray.forEach((element, index) => {
+                inputArray.forEach((element, index) => {
 
                     arrayToDisplay.push(
                         ["hscan", element.hashName, 0, "MATCH", `${element.key}.*`]

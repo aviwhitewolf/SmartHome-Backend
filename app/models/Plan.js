@@ -24,18 +24,18 @@ const Plan = new Schema({
     require : true 
   },
 
-  homeLimit : {
+  connectedHomeLimit : {
     type : Number,
     require : true,
     default : 0  
   },
 
-  deviceLimit : {
+  connectedDeviceLimit : {
     type    : Number,
     default : 0
   },
 
-  roomLimit : {
+  connectedRoomLimit : {
     type : Number,
     default : 0
   },

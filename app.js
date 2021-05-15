@@ -73,7 +73,7 @@ server.on('listening', onListening);
 
 // socket io connection handler 
 const socketLib = require("./app/libs/socketLib");
-const socketServer = socketLib.setServer(server);
+socketLib.setServer(server);
 
 
 // end socketio connection handler
@@ -94,11 +94,11 @@ function onError(error) {
     case 'EACCES':
       logger.error(error.code + ':elavated privileges required', 'serverOnErrorHandler', 10);
       process.exit(1);
-      break;
+      
     case 'EADDRINUSE':
       logger.error(error.code + ':port is already in use.', 'serverOnErrorHandler', 10);
       process.exit(1);
-      break;
+      
     default:
       logger.error(error.code + ':some unknown error occured', 'serverOnErrorHandler', 10);
       throw error;

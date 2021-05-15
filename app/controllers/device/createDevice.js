@@ -36,8 +36,8 @@ let createDeviceFunction = (req, res) => {
 
                 } else {
 
-                    if(result.deviceLimit  - req.body.devices.length >= 0){
-                        req.deviceLimit = result.deviceLimit 
+                    if(result.connectedDeviceLimit  - req.body.devices.length >= 0){
+                        req.connectedDeviceLimit = result.connectedDeviceLimit 
                         resolve()
 
                     }else{
@@ -313,7 +313,7 @@ let createDeviceFunction = (req, res) => {
    
                 let updateDailyUserPlan = {
                             
-                    deviceLimit   : req.deviceLimit - req.body.devices.length,
+                    connectedDeviceLimit   : req.connectedDeviceLimit - req.body.devices.length,
                     lastModified  : time.now()
 
                 }

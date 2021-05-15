@@ -34,14 +34,14 @@ let createRoomFunction = async (req, res) => {
 
                         } else {
 
-                            if (result.roomLimit - 1 >= 0) {
-                                req.roomLimit = result.roomLimit
+                            if (result.connectedRoomLimit - 1 >= 0) {
+                                req.connectedRoomLimit = result.connectedRoomLimit
                                 resolve()
 
                             } else {
 
                                 logger.info('Upgrade your plan to add more rooms', 'roomController : createRoomFunction() : checkDailyUserPlan()', 5)
-                                let apiResponse = response.generate(true, 'Upgrade your plan to add more rooms, current limit : ' + result.roomLimit, 403, null)
+                                let apiResponse = response.generate(true, 'Upgrade your plan to add more rooms, current limit : ' + result.connectedRoomLimit, 403, null)
                                 reject(apiResponse)
 
                             }
@@ -164,7 +164,7 @@ let createRoomFunction = async (req, res) => {
 
                 let updateDailyUserPlan = {
 
-                    roomLimit: req.roomLimit - 1,
+                    connectedRoomLimit: req.connectedRoomLimit - 1,
                     // deviceLimit: req.deviceLimit - (req.body.devices.length || 0),
                     lastModified: time.now()
 

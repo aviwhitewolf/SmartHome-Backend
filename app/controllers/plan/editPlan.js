@@ -50,9 +50,9 @@ let editPlanFunction = (req, res) => {
                 let editPlan = {
                     planName       : req.body.planName,
                     description    : req.body.description,
-                    homeLimit      : req.body.homeLimit,
-                    deviceLimit    : req.body.deviceLimit,
-                    roomLimit      : req.body.roomLimit,
+                    homeLimit      : req.body.connectedHomeLimit,
+                    deviceLimit    : req.body.connectedDeviceLimit,
+                    roomLimit      : req.body.connectedRoomLimit,
                     requestPerDay  : req.body.requestPerDay,
                     price          : req.body.price,
                     currency       : req.body.currency,

@@ -1,30 +1,20 @@
 const appConfig = require("./../../config/appConfig")
 const auth = require('./../middlewares/auth')
 const inputValidationMiddleware = require('./../middlewares/inputValidation');
-const { body } = require('express-validator');
 
-const deleteRedisController = require('./../controllers/redis/deleteRedisEnteries')
-const editRedisController = require('./../controllers/redis/editRedisEnteries')
-const getAllRedisController = require('./../controllers/redis/getAllRedisEnteries')
+const deleteRedisController = require('./../controllers/redis/deleteRedisEnteries').deleteEnteries
+const editRedisController = require('./../controllers/redis/editRedisEnteries').editEntries
+const getAllRedisController = require('./../controllers/redis/getAllRedisEnteries').allEnteries
+const {getEnteriesSchema ,deleteEnteriesSchema} = require('./../services/Validation/redis')
 
 module.exports.setRouter = (app) => {
 
     let baseUrl = `${appConfig.apiVersion}/redis`;
 
     app.post(`${baseUrl}/getEnteries`, auth.isAuthorized,
-        [
-            body('*.hashName').isString().withMessage('Hash Name should be string')
-        ],
-        inputValidationMiddleware.validate,
-        getAllRedisController.allEnteries);
+        inputValidationMiddleware.validation(getEnteriesSchema), getAllRedisController);
 
-    app.post(`${baseUrl}/deleteEnteries`, auth.isAuthorized,
-        [
-            body('*.hashName').isString().withMessage('Hash Name should be string'),
-            body('*.key').isString().withMessage('keys should have string values'),
-            body('*.type').isString().withMessage('Type should have string values')
-        ],
-        inputValidationMiddleware.validate,
-        deleteRedisController.deleteEnteries);
+    app.post(`${baseUrl}/deleteEnteries`, auth.isAuthorized, 
+    inputValidationMiddleware.validation(deleteEnteriesSchema), deleteRedisController);
 
 }

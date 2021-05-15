@@ -1,29 +1,27 @@
 const socketio = require('socket.io');
 const check = require("./checkLib.js");
-const response = require('./../libs/responseLib');
-const tokenLib = require("./../libs/tokenLib.js");
-const logger = require('./../libs/loggerLib.js');
+const response = require('./responseLib');
+const tokenLib = require("./tokenLib.js");
+const logger = require('./loggerLib.js');
 
-const setUserService = require("./../services/socketIo/setUser");
-const updateDeviceAndUserRedis = require("../services/socketIo/updateDeviceAndUser");
+const setUserService = require("../controllers/socketIo/setUser");
+const updateDeviceAndUserRedis = require("../controllers/socketIo/updateDeviceAndUser");
+const deviceStateChangeController = require('../controllers/socketIo/deviceStateChange')
+const { data, validationResult } = require('express-validator');
 
-// if 2 software are connected and one of then gets disconnected then you are updating softwareConnected as 'n'
-//which is wrong
+
 
 
 let setServer = (server) => {
 
     let io = socketio.listen(server);
-    // this is set of all pipes means set of all sockets that are created by different users
-    // let myIo = io.of('/chat') this is just routing if we want chat application to run on http://localhost:3000/chat
     let myIo = io.of('/')
 
 
     myIo.on('connection', (socket) => {
 
-        console.log("Socket Connected ==> emitting 'verify user'");
-
         socket.emit("verifyUser", 'Requesting to Verify user...');
+
 
         socket.on('set-user', (data) => {
 
@@ -90,8 +88,23 @@ let setServer = (server) => {
 
             try {
 
+                isValidData(data)
+                then(isUserAuthorised)
+                .then((data) => {
+                    
+                    socket.to(data.roomId).emit('incoming-device-state-change',data);
+                    deviceStateChangeController.deviceStateChange(data)
+
+                }).catch((err) => {
+                    
+                    socket.emit('set-user-error', err)
+                    if (socket.connected) {
+                        socket.disconnect();
+                    }
+
+                })
                 
-                socket.to(data.roomId).emit('incoming-device-state-change',data);
+                
 
             } catch (err) {
                 console.log("Error", err)
@@ -103,11 +116,12 @@ let setServer = (server) => {
         })
 
         socket.on('incoming-device-state-change', (data) => {
-            console.log(data)
+          console.log(data)
         })
 
-        let isUserAuthorised = (data) => {
 
+        // Check user is authorised
+        let isUserAuthorised = (data) => {
             return new Promise((resolve, reject) => {
 
                 try {
@@ -134,6 +148,38 @@ let setServer = (server) => {
                     reject(apiResponse)
 
                 }
+
+            })
+
+        }
+
+
+        let isValidData = (data) => {
+
+            return new Promise((resolve, reject) => {
+
+                [
+                    data('authToken').isString().withMessage('Home id should be string'),
+                    data('homeId').isString().withMessage('Home id should be string'),
+                    data('homeId').isLength({min : 5, max : 15}).withMessage('Home id length should be greater than 5 and less than 15 '),
+                    data('roomId').isString().withMessage('Room id should be string'),
+                    data('roomId').isLength({min : 5, max : 15}).withMessage('Room id length should be greater than 5 and less than 15 '),
+                    data('devices').isArray().withMessage('Device data missing'),
+                    data('devices.*.deviceName').isString().withMessage('Device name should be string'),
+                    data('devices.*.deviceName').isLength({min : 2, max : 25}).withMessage('Device name length should be greater than 3 and less than 25'),
+                    data('devices.*.state').isInt({ge : 0, le : 1}).withMessage('State should be whole number 0 or 1'),
+                    data('devices.*.voltage').isInt({ge : 0, le : 255}).withMessage('Voltage should be whole number between 0 to 255'),
+                    data('type').isString().withMessage('Home id should be string'),
+                    data('type').isLength({min : 1, max : 1}).withMessage('Home id should be string')
+                ]
+
+                const errors = validationResult(data);
+                if (!errors.isEmpty()) {
+                    return reject(response.generate(true, 'Validation Error', 422, { errors: errors.array() }))
+                }
+
+                resolve(data)
+
 
             })
 
