@@ -1,11 +1,8 @@
 const mongoose = require('mongoose');
 const logger = require('./../../libs/loggerLib.js');
-const time = require('./../../libs/timeLib');
 const config = require('../../config/config')
-const tokenLib = require("./../../libs/tokenLib.js");
 const check = require("./../../libs/checkLib.js");
 const response = require('./../../libs/responseLib');
-const redisLib = require('./../../libs/redisLib');
 // const eventEmitter = new events.EventEmitter();
 
 
@@ -128,7 +125,8 @@ let setUsers = (data) => {
                                     ? If New Home, check connectedHomeLimit
                                     * Add New Home and Room, update home count and room count
                                     */
-                                    if (data.userHash.homes[data.homeId] == undefined && (data.userHash.connectedHome + 1) < data.userHash.connectedHomeLimit) {
+                                    if (data.userHash.homes[data.homeId] == undefined 
+                                        && (data.userHash.connectedHome + 1) < data.userHash.connectedHomeLimit) {
 
                                         data.userVerifiedFromRedis = true
                                         data.forward = true
@@ -218,15 +216,8 @@ let setUsers = (data) => {
 
                         DailyUserPlanModel.aggregate(
                             [
-                                {
-                                    '$match': {
-                                        'userId': {
-                                            '$in': [
-                                                data.userId
-                                            ]
-                                        }
-                                    }
-                                }, {
+                                { '$match': { 'userId': {'$in': [data.userId] } } },
+                                 {
                                     '$lookup': {
                                         'from': 'devices',
                                         'let': {
@@ -239,14 +230,8 @@ let setUsers = (data) => {
                                                     '$expr': {
                                                         '$and': [
                                                             {
-                                                                '$in': [
-                                                                    '$deviceId', '$deviceId', data.devices.map(x => x["deviceId"])
-                                                                ],
-                                                                '$in': [
-                                                                    '$roomId', [
-                                                                        data.roomId
-                                                                    ]
-                                                                ]
+                                                                '$in': ['$roomId', [data.roomId]],
+                                                                '$in': ['$deviceId', data.devices.map(x => x["deviceId"])]
                                                             }
                                                         ]
                                                     }
@@ -397,6 +382,7 @@ let setUsers = (data) => {
                                                 ["hmset", deviceHashName, `${device.deviceId}.state`, device.state],
                                                 ["hmset", deviceHashName, `${device.deviceId}.voltage`, device.voltage],
                                                 ["hmset", deviceHashName, `${device.deviceId}.extra`, device.extra],
+                                                ["hmset", deviceHashName, `${device.deviceId}.value`, device.value || ""],
                                                 ["hincrby", deviceHashName, `${device.deviceId}.${typeText}`, 1],
                                                 ["hmset", deviceHashName, `${device.deviceId}.socketId`, data.socketId]
                                             )
@@ -533,6 +519,7 @@ let setUsers = (data) => {
                                     ["hdel", element.hashName, `${element.key}.state`],
                                     ["hdel", element.hashName, `${element.key}.voltage`],
                                     ["hdel", element.hashName, `${element.key}.extra`],
+                                    ["hdel", element.hashName, `${element.key}.value`]
                                     ["hdel", element.hashName, `${element.key}.harwardConnected`],
                                     ["hdel", element.hashName, `${element.key}.softwareConnected`]
                                 )

@@ -152,81 +152,6 @@ let createDeviceFunction = (req, res) => {
 
     }
 
-    // let createDevice = () => {
-
-    //     return new Promise((resolve, reject) => {
-
-    //     try{
-
-    //         let today    = time.now();
-    //         let deviceId = shortid.generate();
-
-    //         let state    = Number(0);
-    //         let voltage  = Number(0); 
-
-    //         if(parseInt(req.body.state) == 0 || parseInt(req.body.state) == 1){
-    //             state = parseInt(req.body.state)
-    //         }
-            
-    //         if(parseInt(req.body.voltage) >= 0 && parseInt(req.body.voltage) <= 255){
-    //             voltage = parseInt(req.body.voltage)
-    //         }
-
-    //         let extra  = (req.body.extra ? req.body.extra : '')
-        
-    //         let newDevice     = new DeviceModel({
-    //             deviceId      : deviceId, 
-    //             homeId        : req.body.homeId,
-    //             userId        : req.user.userId,
-    //             roomId        : req.body.roomId,
-    //             name          : req.body.deviceName,
-    //             icon          : device.icon || '',
-    //             state         : state,
-    //             createdOn     : today,
-    //             lastModified  : today,
-    //             voltage       : voltage,
-    //             extra         : extra
-    //         })
-
-
-    //         newDevice.save((err, result) => {
-
-    //             if (err) {
-                    
-    //                 logger.error(err.message, 'Device Controller: createDevice', 10, err)
-    //                 let apiResponse = response.generate(true, 'Failed to create new device', 500, null);
-    //                 reject(apiResponse)
-
-    //             } else if (check.isEmpty(result)) {
-                    
-    //                 logger.info('No device found', 'Device Controller: createdevice', 5)
-    //                 let apiResponse = response.generate(true, 'Failed to create new device', 404, null);
-    //                 reject(apiResponse)
-                
-    //             } else {
-                    
-    //                 let newDeviceObj = result.toObject();
-    //                 delete newDeviceObj.__v
-    //                 delete newDeviceObj._id
-    //                 delete newDeviceObj.userId
-
-    //                 resolve(newDeviceObj)
-    //             }
-
-    //         })
-
-    //     } catch (err) {
-                 
-    //         logger.error('Internal server Error', 'Device Controller: createDevice', 10, err)
-    //         let apiResponse = response.generate(true, 'Internal server error', 500, null)
-    //         reject(apiResponse)
-        
-    //     }
-
-    //     })
-
-    // }
-
     let createDevice = () => {
 
         return new Promise((resolve, reject) => {
@@ -251,6 +176,7 @@ let createDeviceFunction = (req, res) => {
                 }
 
                 let extra  = (device.extra ? device.extra : '')
+                let value  = (device.value ? device.value : '')
 
                     let deviceObject = {
 
@@ -264,7 +190,8 @@ let createDeviceFunction = (req, res) => {
                         lastModified : today,
                         state        : state,
                         voltage      : voltage,
-                        extra        : extra
+                        extra        : extra,
+                        value        : value
 
                     }
 

@@ -134,10 +134,10 @@ let editRoomFunction = (req, res) => {
 
 
     editRoom(req, res)
-        .then(editDevice)
+        // .then(editDevice)
         .then((resolve) => {
 
-            let apiResponse = response.generate(false, 'New room and devices are updated', 200, resolve);
+            let apiResponse = response.generate(false, 'New room updated successfully', 200, resolve);
             res.status(apiResponse.status).send(apiResponse)
 
         })

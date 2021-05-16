@@ -11,6 +11,7 @@ const routeLoggerMiddleware = require('./app/middlewares/routeLogger.js');
 const globalErrorMiddleware = require('./app/middlewares/appErrorHandler');
 const mongoose              = require('mongoose');
 const morgan                = require('morgan');
+const redis                 = require('./app/libs/redisLib')
 
 app.use(morgan(appConfig.environment));
 

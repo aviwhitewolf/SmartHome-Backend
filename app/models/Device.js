@@ -61,7 +61,12 @@ const Device = new Schema({
       extra       : [{
           type    : String,
           default : ''
-      }]
+      }],
+
+      value  : {
+        type : String,
+        default : ""
+      }
 
 })
 

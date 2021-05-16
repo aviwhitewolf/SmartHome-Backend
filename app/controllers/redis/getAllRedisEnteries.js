@@ -1,7 +1,5 @@
 const response = require('./../../libs/responseLib')
 const logger = require('./../../libs/loggerLib');
-const check = require('../../libs/checkLib')
-const redisLib = require('../../libs/redisLib');
 
 const Redis = require("ioredis");
 const redis = new Redis();

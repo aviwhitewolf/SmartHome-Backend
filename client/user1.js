@@ -1,21 +1,23 @@
 // connecting with sockets.
 const socket = io('http://localhost:3000');
 
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6ImV6T3NwcFpyUCIsImlhdCI6MTYyMDQ3OTI0NTI1MSwiZXhwIjoxNjIwNzgxNjQ1LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiekRvU3NMZU5RIiwiZmlyc3ROYW1lIjoiQXNoaXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoiYXZpODg5NDczNTVAZ21haWwuY29tIiwibW9iaWxlTnVtYmVyIjo5ODc2NTQzMjExLCJjb3VudHJ5IjoiSU4ifX0.DqPO6NfehwnZJTZs3e9Q-qYiZ4yW20aryNFoKBfm69w"
-const homeId = 'a-coIva72';
-const roomId = 'XV2u03Fl1';
+const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RpZCI6ImxvNzJ2Y1FZNyIsImlhdCI6MTYyMTA5MDg0NjM0MCwiZXhwIjoxNjIxMzkzMjQ2LCJzdWIiOiJhdXRoVG9rZW4iLCJpc3MiOiJ1bmNpYSIsImRhdGEiOnsidXNlcklkIjoiX3NHSGczcVN4IiwiZmlyc3ROYW1lIjoiQXNoaXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoiYXNoaXNobWFyY2gxMkBnbWFpbC5jb20iLCJtb2JpbGVOdW1iZXIiOjk0MTgyOTA0MzQsImNvdW50cnkiOiJJTiJ9fQ.isl5F3oH2onZjNObdf_2aIvmxecqAmwb-mokYP3GmOU"
+const homeId = 'CpxhyE5kv';
+const roomId = 'oSDGDCRmz';
 const devices = [
   {
-    deviceId: 'p13j55UIa',
+    deviceName : "AC",
+    deviceId: 'C0pS46DUWv',
     state: 0,
-    voltage: 150,
-    extra: ''
+    voltage: 150
+    // extra: ''
   },
   {
-    deviceId: 'M7ftRHW6v',
+    deviceName : "Bulb",
+    deviceId: 'He-6VL3Bd',
     state: 1,
-    voltage: 255,
-    extra: ''
+    voltage: 255
+    // extra: ''
   }
 ];
 const updateEventName = 'update-device-state-' + homeId
@@ -72,10 +74,11 @@ let chatSocket = () => {
 
     var messageText = $("#messageToSend").val()
     let device = [  {
-      deviceId: 'p13j55UIa',
+      deviceName : "AC",
+      deviceId: 'C0pS46DUWv',
       state: parseInt(messageText),
-      voltage: 150,
-      extra: ''
+      voltage: 150
+      // extra: ''
     }]
     deviceData.devices = device 
     socket.emit('device-state-change', deviceData)

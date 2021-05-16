@@ -8,7 +8,7 @@ const createPlanSingleSchema = Joi.object({
     connectedDeviceLimit : Joi.number().positive().required(),
     requestPerDayLimit   : Joi.number().positive().required(),
     price : Joi.number().positive().required(),
-    currency :Joi.number().positive().required(),
+    currency :Joi.string().min(3).max(5).required(),
     planName :Joi.string().trim().min(3).max(15).required(),
     toShow : Joi.number().positive().less(3)
 })
@@ -21,7 +21,7 @@ const editPlanSingleSchema = Joi.object({
     connectedDeviceLimit : Joi.number().positive().required(),
     requestPerDayLimit   : Joi.number().positive().required(),
     price : Joi.number().positive().required(),
-    currency :Joi.number().positive().required(),
+    currency :Joi.string().min(3).max(5).required(),
     planName :Joi.string().trim().min(3).max(15).required(),
     toShow : Joi.number().positive().less(3)
 })

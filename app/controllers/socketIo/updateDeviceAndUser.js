@@ -35,7 +35,7 @@ let updateDeviceAndUserRedis = (data) => {
                     try {
 
                         redis.hget(deviceHashName, `${data.socketId}`, (err, result) => {
-
+z
                             if (err) {
 
                                 return reject(response.generate(true, 'Unable to find device from realtime database', 500, null))

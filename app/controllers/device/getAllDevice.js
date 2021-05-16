@@ -15,7 +15,7 @@ let getAllDeviceFunction = (req, res) => {
                 $lookup:
                 {
                     from: "devices",
-                    let: { roomId: "$roomId", homeId: "$homeId" },
+                    let: { roomId: "$roomId", homeId: "$homeId", userId : "$userId" },
                     pipeline: [
                         {
                             $match:
@@ -23,7 +23,8 @@ let getAllDeviceFunction = (req, res) => {
                                 $expr:
                                 {
                                     $and:
-                                        [
+                                        [   
+                                            { $eq: ["$userId", req.user.userId] },
                                             { $eq: ["$roomId", "$$roomId"] },
                                             { $eq: ["$homeId", "$$homeId"] },
                                             { $eq: ["$homeId", req.body.homeId] }

@@ -62,7 +62,7 @@ let createPlanFunction = (req, res) => {
                     createdBy: req.user.adminId,
                     lastModifiedBy: req.user.adminId,
                     lastModified: time.now(),
-                    toShow      : req.body.toShow
+                    toShow : req.body.toShow
                 })
 
                 newPlan.save((err, createdPlan) => {

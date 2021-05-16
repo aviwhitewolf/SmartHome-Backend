@@ -1,7 +1,5 @@
 const response = require('./../../libs/responseLib')
 const logger = require('./../../libs/loggerLib');
-const check = require('../../libs/checkLib')
-const redisLib = require('../../libs/redisLib');
 
 
 const Redis = require("ioredis");
@@ -80,6 +78,7 @@ let deleteRedisEnteriesFunction = (req, res) => {
                             ["hdel", element.hashName, `${element.key}.state`],
                             ["hdel", element.hashName, `${element.key}.voltage`],
                             ["hdel", element.hashName, `${element.key}.extra`],
+                            ["hdel", element.hashName, `${element.key}.value`],
                             ["hdel", element.hashName, `${element.key}.harwardConnected`],
                             ["hdel", element.hashName, `${element.key}.softwareConnected`],
                             ["hdel", element.hashName, `${element.key}.socketId`]
